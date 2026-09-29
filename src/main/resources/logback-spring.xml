@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 1. Console Appender (Keeps logs visible in your terminal) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-m HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 2. File Appender (Filters and writes ONLY errors to error.txt) -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/error.txt</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        
+        <!-- STRICT LEVEL FILTERING -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch> <!-- If it is an ERROR, write it -->
+            <onMismatch>DENY</onMismatch> <!-- If it is ANYTHING else, completely ignore it -->
+        </filter>
+    </appender>
+
+
+    <!-- 3. Root Logger Configuration -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ERROR_FILE" />
+    </root>
+
+</configuration>
