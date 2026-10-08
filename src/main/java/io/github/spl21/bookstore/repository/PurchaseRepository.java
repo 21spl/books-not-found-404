@@ -12,13 +12,13 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
     // 1. Spring Data handles property traversal + OrderBy automatically.
     // Maps to: user -> userId, sorting by purchaseDate descending.
-    List<Purchase> findByUser_UserIdOrderByPurchaseDateDesc(Long userId);
+    List<Purchase> findByUser_IdOrderByPurchaseDateDesc(Long userId);
 
     // 2. Fetch joins to solve the N+1 problem for a single Purchase.
     @Query("SELECT DISTINCT p FROM Purchase p " +
            "LEFT JOIN FETCH p.items i " +
            "LEFT JOIN FETCH i.book " +
-           "WHERE p.purchaseId = :id")
+           "WHERE p.id = :id")
     Optional<Purchase> findByIdWithItems(@Param("id") Long purchaseId);
 
     // 3. Fetch joins to solve the N+1 problem for all Purchases.

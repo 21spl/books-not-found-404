@@ -1,19 +1,27 @@
 package io.github.spl21.bookstore.service;
 
-import io.github.spl21.bookstore.entity.Book;
-import io.github.spl21.bookstore.repository.BookRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import io.github.spl21.bookstore.entity.Book;
+import io.github.spl21.bookstore.repository.BookRepository;
 
 @Service
 @Transactional
 public class BookService {
     
-    @Autowired
-    private BookRepository bookRepository;
+    
+    private final BookRepository bookRepository;
+    
+    public BookService(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
     
     public void addBook(Book book) {
         bookRepository.save(book);

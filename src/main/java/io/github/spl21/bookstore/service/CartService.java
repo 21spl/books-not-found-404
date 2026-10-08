@@ -1,43 +1,54 @@
 package io.github.spl21.bookstore.service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import io.github.spl21.bookstore.entity.*;
-import io.github.spl21.bookstore.repository.*;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import io.github.spl21.bookstore.entity.Book;
+import io.github.spl21.bookstore.entity.Cart;
+import io.github.spl21.bookstore.entity.CartItem;
+import io.github.spl21.bookstore.entity.User;
+import io.github.spl21.bookstore.repository.CartItemRepository;
+import io.github.spl21.bookstore.repository.CartRepository;
 
 
 @Service
 @Transactional
 public class CartService {
     
-    @Autowired
-    private CartRepository cartRepository;
-    @Autowired
-    private CartItemRepository cartItemRepository;
-    @Autowired
-    private BookRepository bookRepository;
+    
+    private final CartRepository cartRepository;
+    
+    private final CartItemRepository cartItemRepository;
+
+
+    CartService(CartRepository cartRepository, CartItemRepository cartItemRepository) {
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+    }
     
     @Transactional(readOnly = true)
     public Cart getCartByUser(User user) {
-        Long userId = user.getUserId(); // Migrated to Long
-        return cartRepository.findByUser_UserId(userId).orElse(null);
+        Long userId = user.getId(); // Migrated to Long
+        return cartRepository.findByUser_Id(userId).orElse(null);
     }
     
     public void addBookToCart(User user, Book book, int quantity) {
-        Cart cart = cartRepository.findByUser_UserId(user.getUserId()).orElse(null);
+        Cart cart = cartRepository.findByUser_Id(user.getId()).orElse(null);
         if (cart == null) {
             cart = new Cart();
+
             cart.setUser(user);
             cart = cartRepository.save(cart); // Assigned back to capture generated ID
+
+            user.setCart(cart);
         }
         
-        Long bookId = book.getBookId(); // Migrated to Long
-        Long cartId = cart.getCartId(); // Migrated to Long
-        CartItem existingItem = cartItemRepository.findByBook_BookIdAndCart_CartId(bookId, cartId).orElse(null);
+        Long bookId = book.getId(); // Migrated to Long
+        Long cartId = cart.getId(); // Migrated to Long
+        CartItem existingItem = cartItemRepository.findByBook_IdAndCart_Id(bookId, cartId).orElse(null);
         
         if (existingItem != null) {
             int newQuantity = existingItem.getQuantity() + quantity;
@@ -59,7 +70,7 @@ public class CartService {
         }
         
         // Recalculate and update cart total using standard clean batch fetches
-        List<CartItem> cartItems = cartItemRepository.findByCart_CartId(cart.getCartId());
+        List<CartItem> cartItems = cartItemRepository.findByCart_Id(cart.getId());
         double total = cartItems.stream()
                 .mapToDouble(CartItem::getSubTotal)
                 .sum();
@@ -80,9 +91,9 @@ public class CartService {
     }
     
     public void clearCart(User user) {
-        Cart cart = cartRepository.findByUser_UserId(user.getUserId()).orElse(null);
+        Cart cart = cartRepository.findByUser_Id(user.getId()).orElse(null);
         if (cart != null) {
-            List<CartItem> items = cartItemRepository.findByCart_CartId(cart.getCartId());
+            List<CartItem> items = cartItemRepository.findByCart_Id(cart.getId());
             // Performance Optimization: Replaced iterative loops with single DB batch statement
             cartItemRepository.deleteAllInBatch(items);
         }
@@ -94,9 +105,9 @@ public class CartService {
     
     @Transactional(readOnly = true)
     public List<CartItem> getCartItems(User user) {
-        Cart cart = cartRepository.findByUser_UserId(user.getUserId()).orElse(null);
+        Cart cart = cartRepository.findByUser_Id(user.getId()).orElse(null);
         if (cart != null) {
-            return cartItemRepository.findByCart_CartId(cart.getCartId());
+            return cartItemRepository.findByCart_Id(cart.getId());
         }
         return new ArrayList<>();
     }

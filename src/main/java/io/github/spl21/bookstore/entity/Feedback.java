@@ -30,7 +30,7 @@ public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long token; // feedback token
+    private Long id; // feedback token
 
     @ManyToOne
     @JoinColumn(name = "user_id")

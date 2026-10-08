@@ -1,6 +1,5 @@
 package io.github.spl21.bookstore.entity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -27,25 +26,39 @@ public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long cartId;
+    private Long id;
 
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
 
+    // Fixed: Left uninitialized so Hibernate proxies can bind efficiently
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> cartItems = new ArrayList<>();
+    private List<CartItem> cartItems;
 
     private double totalAmount;
 
     // keep both sides of the relationship in sync
     public void addItem(CartItem item) {
+        if (this.cartItems == null) {
+            this.cartItems = new java.util.ArrayList<>();
+        }
         cartItems.add(item);
         item.setCart(this);
     }
 
     public void removeItem(CartItem item) {
-        cartItems.remove(item);
-        item.setCart(null);
+        if (cartItems != null) {
+            cartItems.remove(item);
+            item.setCart(null);
+        }
+    }
+
+    // Fixed loop boundary: safely maps user without driving infinite mutual assignment chain
+    public void setUser(User user) {
+        this.user = user;
+        if (user != null && user.getCart() != this) {
+            user.setCart(this);
+        }
     }
 }

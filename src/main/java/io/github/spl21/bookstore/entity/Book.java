@@ -1,13 +1,20 @@
 package io.github.spl21.bookstore.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "books")
@@ -18,7 +25,7 @@ public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long bookId;
+    private Long id;
 
     @NotBlank(message = "Title is required")
     private String title;
@@ -37,9 +44,10 @@ public class Book {
     @Positive(message = "Price must be greater than 0")
     private double price;
 
+    // Fixed: Dropped premature allocation. Hibernate maps its proxies directly here on fetch commands.
     @OneToMany(mappedBy = "book")
-    private List<PurchaseItem> purchaseItems = new ArrayList<>();
+    private List<PurchaseItem> purchaseItems;
 
     @OneToMany(mappedBy = "book")
-    private List<CartItem> cartItems = new ArrayList<>();
+    private List<CartItem> cartItems;
 }

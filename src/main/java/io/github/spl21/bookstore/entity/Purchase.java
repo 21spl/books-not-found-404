@@ -1,15 +1,24 @@
 package io.github.spl21.bookstore.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "purchase")
@@ -21,7 +30,7 @@ public class Purchase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long purchaseId;
+    private Long id;
 
     private LocalDateTime purchaseDate;
 
@@ -30,8 +39,9 @@ public class Purchase {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // Fixed: Left uninitialized so Hibernate proxies can bind efficiently
     @OneToMany(mappedBy = "purchase", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PurchaseItem> items = new ArrayList<>();
+    private List<PurchaseItem> items;
 
     @NotBlank(message = "Phone number is required")
     private String phone;
@@ -43,6 +53,9 @@ public class Purchase {
     private double totalAmount;
 
     public void addItem(PurchaseItem item) {
+        if (this.items == null) {
+            this.items = new java.util.ArrayList<>();
+        }
         items.add(item);
         item.setPurchase(this);
     }

@@ -1,7 +1,9 @@
 package io.github.spl21.bookstore.controller;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,12 +15,13 @@ import io.github.spl21.bookstore.dto.LoginResult;
 import io.github.spl21.bookstore.entity.User;
 import io.github.spl21.bookstore.enums.Role;
 import io.github.spl21.bookstore.service.UserService;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 public class UserController {
     
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    UserController(UserService userService) {
+        this.userService = userService;
+    }
     
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
@@ -79,8 +82,8 @@ public class UserController {
         User user = (User) session.getAttribute("loggedInUser");
         String firstName = "";
         
-        if (user != null && user.getName() != null) {
-            firstName = user.getName().split(" ")[0];
+        if (user != null && user.getUsername() != null) {
+            firstName = user.getUsername().split(" ")[0];
         }
         
         model.addAttribute("firstName", firstName);

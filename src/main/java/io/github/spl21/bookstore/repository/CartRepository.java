@@ -1,12 +1,13 @@
 package io.github.spl21.bookstore.repository;
 
-import io.github.spl21.bookstore.entity.Cart;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+
+import io.github.spl21.bookstore.entity.Cart;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
     // Spring Data automatically traverses relationship: user -> userId
-    Optional<Cart> findByUser_UserId(Long userId);
+    Optional<Cart> findByUser_Id(Long userId);
 }

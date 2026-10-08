@@ -1,6 +1,5 @@
 package io.github.spl21.bookstore.entity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.*;
@@ -15,7 +14,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "users") // "user" is reserved in Postgres, so keep "users"
+@Table(name = "users") 
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,10 +23,10 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    private Long id;
 
     @NotBlank(message = "Name is required")
-    private String name;
+    private String username;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email")
@@ -40,18 +39,19 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role = Role.CUSTOMER; // by default role is set to customer
+    private Role role = Role.CUSTOMER; 
+
 
     @OneToMany(mappedBy = "user")
-    private List<Purchase> purchases = new ArrayList<>();
+    private List<Purchase> purchases;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Cart cart;
 
-    // keeps both sides of the User <-> Cart link in sync
+    // Keeps both sides of the User <-> Cart link in sync without stack loops
     public void setCart(Cart cart) {
         this.cart = cart;
-        if (cart != null) {
+        if (cart != null && cart.getUser() != this) {
             cart.setUser(this);
         }
     }

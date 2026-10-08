@@ -7,7 +7,7 @@ import java.util.List;
 public interface PurchaseItemRepository extends JpaRepository<PurchaseItem, Long> {
 
 
-    List<PurchaseItem> findByPurchasePurchaseId(Long purchaseId);
+    List<PurchaseItem> findByPurchase_Id(Long purchaseId);
 
   
 }

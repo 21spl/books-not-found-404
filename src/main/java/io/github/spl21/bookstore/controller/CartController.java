@@ -111,7 +111,7 @@ public class CartController {
         }
         
         List<CartItem> items = cartService.getCartItems(user);
-        CartItem item = items.stream().filter(i -> i.getItemId().equals(itemId)).findFirst().orElse(null);
+        CartItem item = items.stream().filter(i -> i.getId().equals(itemId)).findFirst().orElse(null);
         if (item == null) return ResponseEntity.badRequest().body("Invalid cart item");
         
         int available = item.getBook().getCopies();
@@ -137,7 +137,7 @@ public class CartController {
         }
         
         List<CartItem> items = cartService.getCartItems(user);
-        CartItem item = items.stream().filter(i -> i.getItemId().equals(itemId)).findFirst().orElse(null);
+        CartItem item = items.stream().filter(i -> i.getId().equals(itemId)).findFirst().orElse(null);
         if (item == null) {
             return ResponseEntity.badRequest().body("Invalid Cart Item");
         }

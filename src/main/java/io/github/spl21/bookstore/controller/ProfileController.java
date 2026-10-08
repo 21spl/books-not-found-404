@@ -3,7 +3,8 @@ package io.github.spl21.bookstore.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,13 +13,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import io.github.spl21.bookstore.entity.Purchase;
 import io.github.spl21.bookstore.entity.User;
 import io.github.spl21.bookstore.service.PurchaseService;
-import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class ProfileController {
     
-    @Autowired
-    private PurchaseService purchaseService;
+    private final PurchaseService purchaseService;
+
+    ProfileController(PurchaseService purchaseService) {
+        this.purchaseService = purchaseService;
+    }
 
     // on clicking profile from navbar
     @GetMapping("/profile")
@@ -30,7 +33,7 @@ public class ProfileController {
             return "redirect:/login";
         }
         
-        List<Purchase> userPurchases = purchaseService.findAllPurchaseByUserId(loggedInUser.getUserId());
+        List<Purchase> userPurchases = purchaseService.findAllPurchaseByUserId(loggedInUser.getId());
 
         model.addAttribute("user", loggedInUser);
         model.addAttribute("purchases", userPurchases);
@@ -46,7 +49,7 @@ public class ProfileController {
             return "redirect:/login";
         }
         
-        List<Purchase> purchases = purchaseService.findAllPurchaseByUserId(user.getUserId());
+        List<Purchase> purchases = purchaseService.findAllPurchaseByUserId(user.getId());
         model.addAttribute("purchases", purchases);
         return "purchase_history"; 
     }

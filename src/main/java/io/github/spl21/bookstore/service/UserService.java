@@ -2,7 +2,6 @@ package io.github.spl21.bookstore.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,8 +13,11 @@ import io.github.spl21.bookstore.repository.UserRepository;
 @Transactional
 public class UserService {
     
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
     
     // Registration
     public boolean registerUser(User user) {

@@ -1,18 +1,23 @@
 package io.github.spl21.bookstore.controller;
 
 
-import io.github.spl21.bookstore.entity.*;
-import io.github.spl21.bookstore.repository.*;
-import io.github.spl21.bookstore.service.*;
-import io.github.spl21.bookstore.enums.*;
-import io.github.spl21.bookstore.dto.*;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import io.github.spl21.bookstore.entity.Book;
+import io.github.spl21.bookstore.entity.Purchase;
+import io.github.spl21.bookstore.entity.User;
+import io.github.spl21.bookstore.service.BookService;
+import io.github.spl21.bookstore.service.PurchaseService;
+import io.github.spl21.bookstore.service.UserService;
 
 @Controller
 public class AdminController {
@@ -46,7 +51,7 @@ public class AdminController {
             Book existing = bookService.addBookIfNotExists(book);
             if (existing != null) {
                 redirectAttributes.addFlashAttribute("error", "Book already exists. You can edit it instead.");
-                return "redirect:/admin/edit_book/" + existing.getBookId();
+                return "redirect:/admin/edit_book/" + existing.getId();
             }
             redirectAttributes.addFlashAttribute("success", "Book added successfully!");
         } catch (Exception e) {

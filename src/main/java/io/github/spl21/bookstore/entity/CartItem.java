@@ -27,7 +27,7 @@ public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long itemId;
+    private Long id;
 
     @Min(value = 1, message = "Quantity must be at least 1")
     private int quantity;
@@ -41,4 +41,6 @@ public class CartItem {
     private Book book;
 
     private double subTotal;
+
+    
 }

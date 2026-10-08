@@ -6,7 +6,7 @@ import io.github.spl21.bookstore.repository.*;
 
 
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,8 +16,11 @@ import java.util.List;
 @Transactional
 public class PurchaseService {
     
-    @Autowired
-    private PurchaseRepository purchaseRepository;
+    private final PurchaseRepository purchaseRepository;
+
+    PurchaseService(PurchaseRepository purchaseRepository) {
+        this.purchaseRepository = purchaseRepository;
+    }
     
     public void createPurchase(Purchase purchase) {
         purchaseRepository.save(purchase);
@@ -30,7 +33,7 @@ public class PurchaseService {
     
     @Transactional(readOnly = true)
     public List<Purchase> findAllPurchaseByUserId(Long userId) { // Updated to Long
-        return purchaseRepository.findByUser_UserIdOrderByPurchaseDateDesc(userId);
+        return purchaseRepository.findByUser_IdOrderByPurchaseDateDesc(userId);
     }
     
     @Transactional(readOnly = true)
