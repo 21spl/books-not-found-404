@@ -3,7 +3,7 @@ package io.github.spl21.bookstore.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,14 +22,17 @@ import io.github.spl21.bookstore.service.UserService;
 @Controller
 public class AdminController {
     
-    @Autowired
-    private BookService bookService;
+    private final BookService bookService;
     
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private PurchaseService purchaseService;
+    private final PurchaseService purchaseService;
+
+    AdminController(BookService bookService, UserService userService, PurchaseService purchaseService) {
+        this.bookService = bookService;
+        this.userService = userService;
+        this.purchaseService = purchaseService;
+    }
     
     // show admin dashboard
     @GetMapping("/admin/dashboard")

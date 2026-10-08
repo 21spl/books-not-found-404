@@ -29,7 +29,7 @@ public class LoginResult {
      * Prevents NullPointerException if the user object is null.
      */
     public boolean isAdmin() {
-        return user != null && user.getRole()==Role.ADMIN;
+        return user != null && user.getRoles().contains(Role.ADMIN);
     }
 }
  

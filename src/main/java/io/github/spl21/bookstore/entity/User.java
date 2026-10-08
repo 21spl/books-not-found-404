@@ -37,9 +37,10 @@ public class User {
     @Size(min = 6, message = "Password must be at least 6 characters long")
     private String password;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role = Role.CUSTOMER; 
+    private List<Role> roles = List.of(Role.CUSTOMER);
 
 
     @OneToMany(mappedBy = "user")

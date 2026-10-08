@@ -5,7 +5,7 @@ package io.github.spl21.bookstore.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -26,10 +26,13 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class CartController {
 
-    @Autowired 
-    private BookService bookService;
-    @Autowired 
-    private CartService cartService;
+    private final BookService bookService;
+    private final CartService cartService;
+
+    CartController(BookService bookService, CartService cartService) {
+        this.bookService = bookService;
+        this.cartService = cartService;
+    }
 
     @GetMapping("/cart")
     public String viewCartPage(HttpSession session, Model model) {

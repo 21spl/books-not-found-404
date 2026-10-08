@@ -5,7 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,17 +22,19 @@ import io.github.spl21.bookstore.entity.User;
 import io.github.spl21.bookstore.service.BookService;
 import io.github.spl21.bookstore.service.CartService;
 import io.github.spl21.bookstore.service.PurchaseService;
-import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class CheckoutController {
 
-    @Autowired 
-    private BookService bookService;
-    @Autowired 
-    private CartService cartService;
-    @Autowired 
-    private PurchaseService purchaseService;
+    private final BookService bookService;
+    private final CartService cartService;
+    private final PurchaseService purchaseService;
+
+    CheckoutController(PurchaseService purchaseService, CartService cartService, BookService bookService) {
+        this.purchaseService = purchaseService;
+        this.cartService = cartService;
+        this.bookService = bookService;
+    }
 
     @GetMapping("/checkout")
     public String showCheckOutForm(HttpSession session, Model model) {

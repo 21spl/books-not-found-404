@@ -3,7 +3,7 @@ package io.github.spl21.bookstore.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +15,11 @@ import io.github.spl21.bookstore.service.BookService;
 @Controller
 public class BookController {
 
-    @Autowired 
-    private BookService bookService;
+    private final BookService bookService;
+
+    BookController(BookService bookService) {
+        this.bookService = bookService;
+    }
 
     @GetMapping("/search")
     public String searchBooks(@RequestParam("query") String keyword, Model model) {
