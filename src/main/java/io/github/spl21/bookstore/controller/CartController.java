@@ -1,17 +1,17 @@
 package io.github.spl21.bookstore.controller;
 
-
-
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -19,33 +19,61 @@ import io.github.spl21.bookstore.entity.Book;
 import io.github.spl21.bookstore.entity.Cart;
 import io.github.spl21.bookstore.entity.CartItem;
 import io.github.spl21.bookstore.entity.User;
+import io.github.spl21.bookstore.repository.UserRepository;
 import io.github.spl21.bookstore.service.BookService;
 import io.github.spl21.bookstore.service.CartService;
-import jakarta.servlet.http.HttpSession;
 
 @Controller
+@RequestMapping("/cart")
 public class CartController {
 
     private final BookService bookService;
     private final CartService cartService;
+    private final UserRepository userRepository;
 
-    CartController(BookService bookService, CartService cartService) {
+    public CartController(
+            BookService bookService,
+            CartService cartService,
+            UserRepository userRepository) {
+
         this.bookService = bookService;
         this.cartService = cartService;
+        this.userRepository = userRepository;
     }
 
-    @GetMapping("/cart")
-    public String viewCartPage(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("loggedInUser");
-        if (user == null) return "redirect:/login";
+    // Retrieve the currently authenticated user's database entity.
+    private Optional<User> getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.empty();
+        }
+
+        return userRepository.findByUsername(authentication.getName());
+    }
+
+    // View cart
+    @GetMapping
+    public String viewCartPage(Authentication authentication, Model model) {
+
+        Optional<User> userOptional = getCurrentUser(authentication);
+
+        if (userOptional.isEmpty()) {
+            return "redirect:/auth/login";
+        }
+
+        User user = userOptional.get();
 
         Cart cart = cartService.getCartByUser(user);
-        List<CartItem> cartItems = cart != null ? cartService.getCartItems(user) : new ArrayList<>();
+
+        List<CartItem> cartItems = cart != null
+                ? cartService.getCartItems(user)
+                : new ArrayList<>();
 
         double totalAmount = 0;
         boolean hasOutOfStock = false;
+
         for (CartItem item : cartItems) {
             totalAmount += item.getQuantity() * item.getBook().getPrice();
+
             if (item.getQuantity() > item.getBook().getCopies()) {
                 hasOutOfStock = true;
             }
@@ -54,98 +82,140 @@ public class CartController {
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("totalAmount", totalAmount);
         model.addAttribute("hasOutOfStock", hasOutOfStock);
+
         return "cart";
     }
 
+    // Add a book to the cart
     @ResponseBody
     @PostMapping("/add")
     public ResponseEntity<String> addToCart(
-            @RequestParam("bookId") Long bookId, // Migrated to Long
+            @RequestParam("bookId") Long bookId,
             @RequestParam("quantity") int quantity,
-            HttpSession session) {
-        
-        User user = (User) session.getAttribute("loggedInUser");
-        if (user == null) {
+            Authentication authentication) {
+
+        Optional<User> userOptional = getCurrentUser(authentication);
+
+        if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                .body("Please login to add items to cart.");
+                    .body("Please login to add items to cart.");
         }
 
         if (quantity <= 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body("Quantity must be at least 1.");
+            return ResponseEntity.badRequest()
+                    .body("Quantity must be at least 1.");
         }
 
         Book book = bookService.getBook(bookId);
+
         if (book == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body("Book with ID " + bookId + " not found.");
+                    .body("Book with ID " + bookId + " not found.");
         }
 
         int copies = book.getCopies();
-        if (copies == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body("This book is out of stock.");
+
+        if (copies <= 0) {
+            return ResponseEntity.badRequest()
+                    .body("This book is out of stock.");
         }
-        if (copies < quantity) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body("Only " + copies + " copies available.");
+
+        if (quantity > copies) {
+            return ResponseEntity.badRequest()
+                    .body("Only " + copies + " copies available.");
         }
+
+        User user = userOptional.get();
 
         try {
             cartService.addBookToCart(user, book, quantity);
-            return ResponseEntity.ok("Book '" + book.getTitle() + "' added to cart successfully!");
+
+            return ResponseEntity.ok(
+                    "Book '" + book.getTitle() + "' added to cart successfully!");
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body("Failed to add book to cart: " + e.getMessage());
+                    .body("Failed to add book to cart.");
         }
     }
 
-    @PostMapping("/cart/update")
+    // Update cart item quantity
     @ResponseBody
-    public ResponseEntity<?> updateCartItemQuantity(
-            @RequestParam("itemId") Long itemId, // Migrated to Long
-            @RequestParam("quantity") int quantity, 
-            HttpSession session) {
-        
-        User user = (User) session.getAttribute("loggedInUser");
-        if (user == null) {
+    @PostMapping("/update")
+    public ResponseEntity<String> updateCartItemQuantity(
+            @RequestParam("itemId") Long itemId,
+            @RequestParam("quantity") int quantity,
+            Authentication authentication) {
+
+        Optional<User> userOptional = getCurrentUser(authentication);
+
+        if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                .body("Please login to access the cart.");
+                    .body("Please login to access the cart.");
         }
-        
+
+        User user = userOptional.get();
+
         List<CartItem> items = cartService.getCartItems(user);
-        CartItem item = items.stream().filter(i -> i.getId().equals(itemId)).findFirst().orElse(null);
-        if (item == null) return ResponseEntity.badRequest().body("Invalid cart item");
-        
-        int available = item.getBook().getCopies();
+
+        CartItem item = items.stream()
+                .filter(i -> i.getId().equals(itemId))
+                .findFirst()
+                .orElse(null);
+
+        if (item == null) {
+            return ResponseEntity.badRequest()
+                    .body("Invalid cart item.");
+        }
 
         if (quantity < 1) {
             cartService.removeCartItem(item);
-            return ResponseEntity.ok("Item removed due to zero quantity");
-        } else if (quantity > available) {
-            return ResponseEntity.badRequest().body("Only " + available + " copies available.");
-        } else {
-            cartService.updateCartItemQuantity(itemId, quantity);
-            return ResponseEntity.ok("Quantity updated");
+
+            return ResponseEntity.ok("Item removed due to zero quantity.");
         }
+
+        int available = item.getBook().getCopies();
+
+        if (quantity > available) {
+            return ResponseEntity.badRequest()
+                    .body("Only " + available + " copies available.");
+        }
+
+        cartService.updateCartItemQuantity(itemId, quantity);
+
+        return ResponseEntity.ok("Quantity updated.");
     }
 
+    // Remove cart item
     @ResponseBody
-    @PostMapping("/cart/remove")
-    public ResponseEntity<?> removeCartItem(@RequestParam("itemId") Long itemId, HttpSession session) { // Migrated to Long
-        
-        User user = (User) session.getAttribute("loggedInUser");
-        if (user == null) {
-            return ResponseEntity.badRequest().body("Please login to access the cart.");
+    @PostMapping("/remove")
+    public ResponseEntity<String> removeCartItem(
+            @RequestParam("itemId") Long itemId,
+            Authentication authentication) {
+
+        Optional<User> userOptional = getCurrentUser(authentication);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Please login to access the cart.");
         }
-        
+
+        User user = userOptional.get();
+
         List<CartItem> items = cartService.getCartItems(user);
-        CartItem item = items.stream().filter(i -> i.getId().equals(itemId)).findFirst().orElse(null);
+
+        CartItem item = items.stream()
+                .filter(i -> i.getId().equals(itemId))
+                .findFirst()
+                .orElse(null);
+
         if (item == null) {
-            return ResponseEntity.badRequest().body("Invalid Cart Item");
+            return ResponseEntity.badRequest()
+                    .body("Invalid cart item.");
         }
-        
+
         cartService.removeCartItem(item);
-        return ResponseEntity.ok("Item removed from cart");
+
+        return ResponseEntity.ok("Item removed from cart.");
     }
 }

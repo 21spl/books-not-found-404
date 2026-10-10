@@ -28,12 +28,15 @@ public class BookService {
     }
     
     public Book addBookIfNotExists(Book book) {
-        Book existing = bookRepository.findByTitleAndAuthor(book.getTitle(), book.getAuthor()).orElse(null);
+        Book existing = bookRepository
+                .findByTitleAndAuthor(book.getTitle(), book.getAuthor())
+                .orElse(null);
+
         if (existing != null) {
             return existing;
         }
-        bookRepository.save(book);
-        return null; 
+
+        return bookRepository.save(book);
     }
     
     public void updateBook(Book book) {

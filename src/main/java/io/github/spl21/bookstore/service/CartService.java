@@ -36,6 +36,13 @@ public class CartService {
     }
     
     public void addBookToCart(User user, Book book, int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
+        }
+
+        if (book.getCopies() < 1) {
+            throw new IllegalArgumentException("This book is out of stock.");
+        }
         Cart cart = cartRepository.findByUser_Id(user.getId()).orElse(null);
         if (cart == null) {
             cart = new Cart();
@@ -52,15 +59,16 @@ public class CartService {
         
         if (existingItem != null) {
             int newQuantity = existingItem.getQuantity() + quantity;
+
             if (newQuantity > book.getCopies()) {
-                newQuantity = book.getCopies();
+                throw new IllegalArgumentException("Requested quantity exceeds available stock.");
             }
             
             existingItem.setQuantity(newQuantity);
             existingItem.setSubTotal(newQuantity * book.getPrice());
             cartItemRepository.save(existingItem); // save() acts as update
         } else {
-            int actualQuantity = Math.min(quantity, book.getCopies());
+            int actualQuantity = quantity;
             CartItem newItem = new CartItem();
             newItem.setBook(book);
             newItem.setCart(cart);
@@ -78,29 +86,86 @@ public class CartService {
         cartRepository.save(cart);
     }
     
-    public void updateCartItemQuantity(Long cartItemId, int quantity) { // Migrated to Long
+    public void updateCartItemQuantity(Long cartItemId, int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
+        }
+
         CartItem item = cartItemRepository.findById(cartItemId).orElse(null);
-        if (item != null) {
-            item.setQuantity(quantity);
-            cartItemRepository.save(item);
-        }  
+
+        if (item == null) {
+            return;
+        }
+
+        if (quantity > item.getBook().getCopies()) {
+            throw new IllegalArgumentException(
+                    "Requested quantity exceeds available stock.");
+        }
+
+        item.setQuantity(quantity);
+        item.setSubTotal(quantity * item.getBook().getPrice());
+
+        Cart cart = item.getCart();
+
+        List<CartItem> cartItems = cartItemRepository.findByCart_Id(cart.getId());
+
+        double total = cartItems.stream()
+                .mapToDouble(cartItem ->
+                        cartItem.getId().equals(item.getId())
+                                ? item.getSubTotal()
+                                : cartItem.getSubTotal())
+                .sum();
+
+        cart.setTotalAmount(total);
+        cartRepository.save(cart);
     }
     
     public void removeCartItem(CartItem item) {
+        Cart cart = item.getCart();
+
         cartItemRepository.delete(item);
+        cartItemRepository.flush();
+
+        List<CartItem> remainingItems =
+                cartItemRepository.findByCart_Id(cart.getId());
+
+        double total = remainingItems.stream()
+                .mapToDouble(CartItem::getSubTotal)
+                .sum();
+
+        cart.setTotalAmount(total);
+        cartRepository.save(cart);
+    
     }
     
     public void clearCart(User user) {
         Cart cart = cartRepository.findByUser_Id(user.getId()).orElse(null);
+
         if (cart != null) {
             List<CartItem> items = cartItemRepository.findByCart_Id(cart.getId());
-            // Performance Optimization: Replaced iterative loops with single DB batch statement
             cartItemRepository.deleteAllInBatch(items);
+
+            cart.setTotalAmount(0.0);
+            cartRepository.save(cart);
         }
     }
     
     public void updateCartItem(CartItem item) {
+        item.setSubTotal(item.getQuantity() * item.getBook().getPrice());
+        Cart cart = item.getCart();
         cartItemRepository.save(item);
+
+        List<CartItem> cartItems = cartItemRepository.findByCart_Id(cart.getId());
+
+        double total = cartItems.stream()
+                .mapToDouble(cartItem ->
+                        cartItem.getId().equals(item.getId())
+                                ? item.getSubTotal()
+                                : cartItem.getSubTotal())
+                .sum();
+
+        cart.setTotalAmount(total);
+        cartRepository.save(cart);
     }
     
     @Transactional(readOnly = true)

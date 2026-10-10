@@ -15,21 +15,30 @@ public class CookieBearerTokenResolver
     @Override
     public String resolve(HttpServletRequest request) {
 
-        // ask the servlet request for the cookies
+        // Public authentication endpoints don't need the existing JWT.
+        String path = request.getServletPath();
+
+        if (path.startsWith("/auth/")) {
+            return null;
+        }
+
         Cookie[] cookies = request.getCookies();
 
         if (cookies == null) {
             return null;
         }
 
-        // among all the cookies, search for the cookie named JWT
         for (Cookie cookie : cookies) {
-
             if (COOKIE_NAME.equals(cookie.getName())) {
-                return cookie.getValue();
+                String token = cookie.getValue();
+
+                return (token == null || token.isBlank())
+                        ? null
+                        : token;
             }
         }
 
         return null;
     }
+    
 }

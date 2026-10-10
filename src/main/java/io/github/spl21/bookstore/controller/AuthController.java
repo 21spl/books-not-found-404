@@ -124,7 +124,7 @@ public class AuthController {
             response.addHeader(
                     "Set-Cookie", jwtCookie.toString());
 
-            return "redirect:/user/dashboard";
+            return "redirect:/profile";
 
         } catch (AuthenticationException exception) {
 
