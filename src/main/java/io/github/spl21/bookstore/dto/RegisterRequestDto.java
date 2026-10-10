@@ -2,12 +2,16 @@ package io.github.spl21.bookstore.dto;
 
 
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class RegisterRequestDto {
+
+    @NotBlank(message = "Full name is required")
+    @Size(max = 100, message = "Full name cannot exceed 100 characters")
+    private String name;
+
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
@@ -20,11 +24,12 @@ public class RegisterRequestDto {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email")
-    @Column(unique = true, nullable = false)
     private String email;
 
     public RegisterRequestDto() {
     }
+
+    
 
     public String getUsername() {
         return username;
@@ -48,6 +53,18 @@ public class RegisterRequestDto {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+
+
+    public String getName() {
+        return name;
+    }
+
+
+
+    public void setName(String name) {
+        this.name = name;
     }
 
 }

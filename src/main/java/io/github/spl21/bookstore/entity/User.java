@@ -1,6 +1,5 @@
 package io.github.spl21.bookstore.entity;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,9 +27,13 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "username is required")
     @Column(unique = true, nullable = false)
     private String username;
+
+    @NotBlank(message = "Full name is required")
+    @Column(nullable = false)
+    private String name;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email")

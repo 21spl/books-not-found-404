@@ -29,6 +29,6 @@ public class HomeController {
         model.addAttribute("bestSellers", bestSellers);
         model.addAttribute("genres", genres);
 
-        return "home"; 
+        return "public/home"; 
     }
 }

@@ -1,0 +1,39 @@
+<div th:fragment="admin-navbar">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #121212; box-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: -0.5rem;">
+        <div class="container-fluid py-2">
+
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold text-light" th:href="@{/admin/dashboard}" style="font-size: 1.25rem;">
+                404BooksNotFound - Admin
+            </a>
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarAdminContent" aria-controls="navbarAdminContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar Content -->
+            <div class="collapse navbar-collapse" id="navbarAdminContent">
+
+                <!-- Left Menu -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link text-light" th:href="@{/admin/dashboard}">Dashboard</a>
+                    </li>
+                </ul>
+
+                <!-- Right Menu -->
+                <ul class="navbar-nav d-flex align-items-center gap-2">
+                    <li class="nav-item">
+                        <form th:action="@{/auth/logout}" method="post">
+                            <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+</div>

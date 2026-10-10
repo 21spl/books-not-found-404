@@ -98,10 +98,10 @@ public class CheckoutController {
 
         if (!outOfStockMessages.isEmpty()) {
             model.addAttribute("outOfStockWarnings", outOfStockMessages);
-            return "cart";
+            return "customer/cart";
         }
 
-        return "checkout";
+        return "customer/checkout";
     }
 
     @PostMapping("/placeOrder")
@@ -124,7 +124,7 @@ public class CheckoutController {
             model.addAttribute("checkoutError",
                     "Please provide a valid address and 10-digit phone number.");
 
-            return "checkout";
+            return "customer/checkout";
         }
 
         User currentUser = userOptional.get();
@@ -161,7 +161,7 @@ public class CheckoutController {
                             .sum());
             model.addAttribute("stockErrors", stockErrors);
 
-            return "checkout";
+            return "customer/checkout";
         }
 
         // Step 2: Create Purchase
@@ -208,6 +208,6 @@ public class CheckoutController {
 
     @GetMapping("/order_success")
     public String showOrderSuccessPage() {
-        return "order_success";
+        return "customer/order_success";
     }
 }

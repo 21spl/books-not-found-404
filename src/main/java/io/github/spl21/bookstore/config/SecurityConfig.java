@@ -26,6 +26,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
@@ -142,6 +144,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
+            CsrfTokenRepository csrfTokenRepository,
             JwtAuthenticationConverter jwtAuthenticationConverter)
             throws Exception {
 
@@ -174,7 +177,9 @@ public class SecurityConfig {
 
             // CSRF protection remains enabled for browser forms.
             // Do not disable it merely because authentication uses JWT.
-
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(csrfTokenRepository)
+            )
             // Redirect unauthenticated browser requests to the login page.
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(
@@ -194,5 +199,16 @@ public class SecurityConfig {
             );
 
         return http.build();
+    }
+
+
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        HttpSessionCsrfTokenRepository repository =
+                new HttpSessionCsrfTokenRepository();
+
+        repository.setHeaderName("X-CSRF-TOKEN");
+
+        return repository;
     }
 }

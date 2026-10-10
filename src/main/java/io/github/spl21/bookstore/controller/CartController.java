@@ -43,13 +43,14 @@ public class CartController {
 
     // Retrieve the currently authenticated user's database entity.
     private Optional<User> getCurrentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getName())) {
             return Optional.empty();
         }
 
         return userRepository.findByUsername(authentication.getName());
     }
-
     // View cart
     @GetMapping
     public String viewCartPage(Authentication authentication, Model model) {
@@ -83,7 +84,7 @@ public class CartController {
         model.addAttribute("totalAmount", totalAmount);
         model.addAttribute("hasOutOfStock", hasOutOfStock);
 
-        return "cart";
+        return "customer/cart";
     }
 
     // Add a book to the cart

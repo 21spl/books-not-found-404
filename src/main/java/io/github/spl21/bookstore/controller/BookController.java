@@ -25,7 +25,7 @@ public class BookController {
     public String searchBooks(@RequestParam("query") String keyword, Model model) {
         List<Book> books = bookService.searchBooks(keyword);
         model.addAttribute("books", books);
-        return "book_list";
+        return "public/book_list";
     }
 
     @GetMapping("/books")
@@ -33,6 +33,6 @@ public class BookController {
         List<Book> booksByGenre = bookService.searchBooksByGenre(genre);
         model.addAttribute("genre", genre);
         model.addAttribute("books", booksByGenre);
-        return "book_list";
+        return "public/book_list";
     }
 }

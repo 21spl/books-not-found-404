@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">  
+<head>
+    <meta charset="UTF-8">
+    <title>All Books - Admin</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <!-- After editing style.css -->
+<link rel="stylesheet" th:href="@{/css/style.css(v='1.0.2')}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar Fragment -->
+<div th:insert="fragments/admin-navbar :: admin-navbar"></div>
+<div class="container mt-4">
+    <h2 class="mb-4">All Books</h2>
+
+    <!-- Flash message -->
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="book : ${books}">
+            <td th:text="${book.id}">BookId</td>
+            <td th:text="${book.title}">Title</td>
+            <td th:text="${book.author}">Author</td>
+            <td th:text="${book.price}">Price</td>
+            <td th:text="${book.copies}">Stock</td>
+            <td th:text="${book.description}">Description</td>
+            <td>
+                <a th:href="@{'/admin/edit_book/' + ${book.id}}" class="btn btn-sm btn-primary">Edit</a>
+                <a th:href="@{'/admin/delete_book/' + ${book.id}}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

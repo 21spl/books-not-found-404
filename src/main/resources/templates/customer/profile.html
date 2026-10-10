@@ -1,0 +1,180 @@
+
+<html>
+    <head>
+        <title>Profile</title>
+        <meta name="_csrf" th:content="${_csrf.token}">
+        <meta name="_csrf_header" th:content="${_csrf.headerName}">
+        <meta charset="UTF-8">
+        <!-- After editing style.css -->
+        <link rel="stylesheet" th:href="@{/css/style.css(v='1.0.2')}">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <link rel="stylesheet" th:href="@{/css/style.css(v='1.0.2')}">
+        <link rel="stylesheet" href="/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-papcAxPZOkZLKFcV0iM6zzJzX/VCYqu7y7P+MmfQUqsmLSNKJVi2XScqYtQbnUmZUdOHF+xd9oZhxw50YdI0yQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link href="https://fonts.cdnfonts.com/css/segoe-ui-4" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        
+        <style>
+            
+            
+            
+            .card {
+                /**border: 1px solid rgba(138, 43, 226, 0.4);**/ /* Neon dark purple (like BlueViolet) */
+                box-shadow: 0 0 8px rgba(138, 43, 226, 0.2); /* subtle glow */
+                border-radius: 0px;
+                transition: all 0.3s ease;
+                background-color: #000000; /* optional for dark themes */
+                color: #fff; /* optional: for text contrast */
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            body {
+                background-color: #000000;
+                color: #ffffff;
+                font-family: 'Segoe UI', sans-serif, 'Cascadia Code', 'Caveat Brush', 'Pastry Paradise', 'Cracksmoon', 'Playpen Sans';
+                font-size: 1.3rem;
+            }
+
+            /* Card title underline */
+            .card-title {
+              font-size: 40px;
+              color: #fff;
+              border-bottom: 1px solid #7a00ff99;
+              padding-bottom: 8px;
+              margin-bottom: 3rem;
+              
+            }
+
+            /* Inner boxes for each purchase */
+            .purchase-box {
+              background-color: #000000;
+              border-left: 4px solid #a020f0;
+              padding: 12px;
+              border-radius: 8px;
+              box-shadow: 0 0 5px #a020f088;
+            }
+
+            /* List of books */
+            ul {
+              list-style: square;
+              padding-left: 20px;
+              color: #ccc;
+            }
+
+            strong {
+              color: #fff;
+            }
+
+            .card p {
+              margin-bottom: 8px;
+            }
+            
+            .container {
+                padding-top: 40px;
+                padding-bottom: 40px;
+            }
+            
+            
+            .user-info-card {
+                
+                color: #fff;
+                
+                padding: 24px;
+                margin-top: 30px;
+                margin-bottom: 20px;
+              }
+
+              .section-title {
+                border-bottom: 1px solid #6f42c1;
+                padding-bottom: 8px;
+                margin-bottom: 20px;
+                font-size: 40px;
+              }
+
+              .info-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 16px;
+              }
+
+              .label {
+                font-size: 0.9rem;
+                color: #bbb;
+                flex: 1;
+              }
+
+              .value {
+                font-size: 1.2rem;
+                font-weight: 600;
+                text-align: right;
+                flex: 2;
+              }
+              
+              .purchase-details{
+                  font-size: 15px;
+              }
+
+
+        </style>
+    </head>
+    <body>
+        
+        <!-- Navbar -->
+        <div th:insert="fragments/navbar :: navbar"></div>
+        
+           
+          <div class="card user-info-card">
+            <div class="card-body">
+              <h4 class="section-title">User Details</h4>
+
+              <div class="info-row">
+                <span class="label">Username</span>
+                <span class="value" th:text="${user.username}">john21</span>
+              </div>
+
+              <div class="info-row">
+                <span class="label">Email</span>
+                <span class="value" th:text="${user.email}">john@example.com</span>
+              </div>
+            </div>
+          </div>
+
+      
+        
+        <!--show Purchase History -->
+        <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Purchase History</h5>
+
+              <div th:if="${#lists.isEmpty(purchases)}">
+                <p>You haven't made any purchases yet.</p>
+              </div>
+
+              <div th:each="purchase : ${purchases}" class="mb-3 border rounded p-3 purchase-details">
+                <p><strong>Purchase ID:</strong> <span th:text="${purchase.id}"></span></p>
+                <p><strong>Date:</strong> <span th:text="${#temporals.format(purchase.purchaseDate, 'dd MMM yyyy')}"></span></p>
+                <p><strong>Total:</strong> ₹<span th:text="${#numbers.formatDecimal(purchase.totalAmount, 0, 'COMMA', 2, 'POINT')}"></span></p>
+                <p><strong>Delivery Address:</strong> <span th:text="${purchase.address}"></span></p>
+                <p><strong>Phone:</strong> <span th:text="${purchase.phone}"></span></p>
+
+                <a class="btn btn-primary btn-sm"
+                    th:href="@{/profile/purchase_details/{id}(id=${purchase.purchaseId})}">
+                    View Details
+                 </a>
+
+            </div>
+        </div>
+
+    <!-- Footer -->
+    <div class="footer text-center">
+        &copy; 2025 404BooksNotFound &nbsp;|&nbsp; Built with irony, styled with restraint.
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>        
+        
+    </body>
+</html>

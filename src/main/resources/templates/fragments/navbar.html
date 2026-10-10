@@ -1,0 +1,162 @@
+<div th:fragment="navbar"
+     xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+    <nav class="navbar navbar-expand-lg navbar-dark"
+         style="background-color: #000000;
+                border-bottom: 1.5px solid rgba(138, 43, 226, 0.4);
+                box-shadow: 0 0 8px rgba(138, 43, 226, 0.2);
+                border-radius: 0;
+                color: #fff;">
+
+        <div class="container-fluid py-2">
+
+            <!-- Brand -->
+            <a class="navbar-brand text-light"
+               th:href="@{/}"
+               style="font-weight: 700 !important;">
+                <strong>404BooksNotFound</strong>
+            </a>
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar Content -->
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+                <!-- Left Menu -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link text-light" th:href="@{/}">
+                            Home
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Right Menu -->
+                <ul class="navbar-nav d-flex align-items-center gap-2">
+
+                    <!-- Login: Anonymous Users Only -->
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="btn btn-outline-light btn-sm"
+                           th:href="@{/auth/login}">
+                            Login
+                        </a>
+                    </li>
+
+                    <!-- Registration: Anonymous Users Only -->
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="btn btn-success btn-sm"
+                           th:href="@{/auth/register}">
+                            Sign Up
+                        </a>
+                    </li>
+
+                    <!-- Customer Account Dropdown -->
+                    <li class="nav-item dropdown"
+                        sec:authorize="hasRole('CUSTOMER')">
+
+                        <a class="nav-link dropdown-toggle"
+                           href="#"
+                           id="customerAccountDropdown"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">
+
+                            Welcome,
+                            <span sec:authentication="name">Customer</span>
+                        </a>
+
+                        <ul class="dropdown-menu dropdown-menu-end"
+                            aria-labelledby="customerAccountDropdown">
+
+                            <li>
+                                <a class="dropdown-item" th:href="@{/profile}">
+                                    My Profile
+                                </a>
+                            </li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <li>
+                                <form th:action="@{/auth/logout}" method="post">
+                                    <button type="submit" class="dropdown-item">
+                                        Logout
+                                    </button>
+                                </form>
+                            </li>
+
+                        </ul>
+                    </li>
+
+                    <!-- Admin Account Dropdown -->
+                    <li class="nav-item dropdown"
+                        sec:authorize="hasRole('ADMIN')">
+
+                        <a class="nav-link dropdown-toggle"
+                           href="#"
+                           id="adminAccountDropdown"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">
+
+                            Welcome,
+                            <span sec:authentication="name">Admin</span>
+                        </a>
+
+                        <ul class="dropdown-menu dropdown-menu-end"
+                            aria-labelledby="adminAccountDropdown">
+
+                            <li>
+                                <a class="dropdown-item"
+                                   th:href="@{/admin/dashboard}">
+                                    Admin Dashboard
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item"
+                                   th:href="@{/admin/view_purchases}">
+                                    View Purchases
+                                </a>
+                            </li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <li>
+                                <form th:action="@{/auth/logout}" method="post">
+                                    <button type="submit" class="dropdown-item">
+                                        Logout
+                                    </button>
+                                </form>
+                            </li>
+
+                        </ul>
+                    </li>
+
+                    <!-- Cart: Customer Only -->
+                    <li class="nav-item"
+                        sec:authorize="hasRole('CUSTOMER')">
+
+                        <a class="nav-link text-light" th:href="@{/cart}">
+                            🛒 Cart
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Details</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <link rel="stylesheet" th:href="@{/css/style.css(v='1.0.2')}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/segoe-ui-4" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/cascadia-code" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif, 'Cascadia Code', 'Caveat Brush', 'Pastry Paradise', 'Cracksmoon', 'Playpen Sans';
+            font-size: 1.3rem;
+        }
+
+        .card {
+            border: 1px solid rgba(138, 43, 226, 0.4); /* Neon dark purple (like BlueViolet) */
+            box-shadow: 0 0 8px rgba(138, 43, 226, 0.2); /* subtle glow */
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background-color: #000000; /* optional for dark themes */
+            color: #fff; /* optional: for text contrast */
+            margin: 20px;
+            padding-left: 40px;
+            padding-right: 40px;
+        }
+
+        .footer {
+            padding: 1rem;
+            font-size: 1rem;
+            background-color: #1a1a1a;
+            border-top: 1px solid #2c2c2c;
+            color: #888;
+        }
+
+        hr {
+            border-color: #a259ff;
+            border-width: 2px;
+        }
+
+        .alert-warning {
+            background-color: #332200;
+            color: #ffc107;
+            border: 1px solid #664400;
+        }
+
+        h2, h4, label {
+            padding-top: 30px;
+            color: #a259ff;
+        }
+
+        .table-dark-custom {
+            background-color: #000000;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 5px;
+            padding: 5px;
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .table-dark-custom thead {
+            background-color: #000000;
+            color: #fff;
+            border-bottom: #fff;
+            font-weight: bold;
+        }
+
+        .table-dark-custom tbody tr {
+            border-color: #1B1F23;
+        }
+
+        .table-dark-custom td,
+        .table-dark-custom th {
+            background-color: transparent;
+            color: #fff;
+        }
+
+        .table-dark-custom tbody tr:hover {
+            background-color: #2a2a2a;
+        }
+
+        .form-control, textarea {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #444;
+        }
+
+        .form-control:focus, textarea:focus {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border-color: #a259ff;
+            box-shadow: 0 0 5px #a259ff66;
+        }
+
+        .btn-primary {
+            background-color: #a259ff;
+            border: none;
+            padding-bottom: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: #8a3edb;
+        }
+
+        .total-amt {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Dynamic Navbar based on role -->
+    <div sec:authorize="hasRole('ADMIN')"
+         th:insert="fragments/admin-navbar :: admin-navbar"></div>
+
+    <div sec:authorize="!hasRole('ADMIN')"
+         th:insert="fragments/navbar :: navbar"></div>
+
+    <div class="container mt-4">
+
+        <h3>Purchase Details</h3>
+
+        <div class="mb-3">
+            <strong>Purchase ID:</strong>
+            <span th:text="${purchase.id}"></span><br>
+
+            <strong>Date:</strong>
+            <span th:text="${#temporals.format(purchase.purchaseDate, 'dd MMM yyyy HH:mm')}"></span><br>
+
+            <strong>Phone:</strong>
+            <span th:text="${purchase.phone}"></span><br>
+
+            <strong>Address:</strong>
+            <span th:text="${purchase.address}"></span>
+        </div>
+
+        <h4 class="mt-4">Purchased Items</h4>
+
+        <div class="card">
+            <table class="table-dark-custom mt-3">
+                <thead>
+                    <tr>
+                        <th>Book</th>
+                        <th>Price at Purchase (₹)</th>
+                        <th>Quantity</th>
+                        <th>Subtotal (₹)</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="item : ${purchase.items}">
+                        <td th:text="${item.book.title}">Book Title</td>
+
+                        <td th:text="${#numbers.formatDecimal(item.priceAtPurchase, 0, 'COMMA', 2, 'POINT')}">
+                            0.00
+                        </td>
+
+                        <td th:text="${item.quantity}">1</td>
+
+                        <td th:text="${#numbers.formatDecimal(item.priceAtPurchase * item.quantity, 0, 'COMMA', 2, 'POINT')}">
+                            0.00
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h5 class="text-end mt-4 total-amt">
+                Total Amount: ₹<span th:text="${#numbers.formatDecimal(purchase.totalAmount, 0, 'COMMA', 2, 'POINT')}"></span>
+            </h5>
+
+            <br>
+            <br>
+
+            <div>
+                <a class="btn btn-secondary mt-3"
+                   sec:authorize="hasRole('ADMIN')"
+                   th:href="@{/admin/view_purchases}">
+                    ← Back to View All Purchases
+                </a>
+
+                <a class="btn btn-secondary mt-3"
+                   sec:authorize="!hasRole('ADMIN')"
+                   th:href="@{/profile}">
+                    ← Back to Purchase History
+                </a>
+            </div>
+
+            <br>
+            <br>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer text-center">
+        &copy; 2025 404BooksNotFound &nbsp;|&nbsp; Built with irony, styled with restraint.
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

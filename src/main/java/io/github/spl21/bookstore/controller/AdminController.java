@@ -121,4 +121,16 @@ public class AdminController {
         model.addAttribute("users", users);
         return "admin/view_users";
     }
+
+    @GetMapping("/purchases/{id}")
+    public String viewPurchaseDetails(@PathVariable Long id, Model model) {
+        Purchase purchase = purchaseService.findByIdWithItems(id);
+
+        if (purchase == null) {
+            return "redirect:/admin/view_purchases";
+        }
+
+        model.addAttribute("purchase", purchase);
+        return "admin/purchase_details";
+    }
 }

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www/thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Home | 404BooksNotFound</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.cdnfonts.com/css/jokerman" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/aajax-surreal-freak" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/re-donk-u-less" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/playpen-sans" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/pastry-paradise" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/cascadia-code" rel="stylesheet">
+                            
+     <link href="https://fonts.cdnfonts.com/css/cracksmoon?styles=169338" rel="stylesheet">
+      <link href="https://fonts.cdnfonts.com/css/caveat-brush" rel="stylesheet">
+      <link href="https://fonts.cdnfonts.com/css/segoe-ui-4" rel="stylesheet">
+                
+                                     
+    <!-- CSS -->
+    <link rel="stylesheet" href="/resources/css/style.css?v=1.0.2">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif, 'Cascadia Code', 'Caveat Brush', 'Pastry Paradise', 'Cracksmoon', 'Playpen Sans';
+            font-size: 1.3rem;
+        }
+
+        .funny-heading {
+            font-family: 'Jokerman','re-donk-u-less','aajax-surreal-freak',  cursive;
+            font-size: 70px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+        
+       .welcome-section {
+            padding: 4rem 2rem;
+            font-family: 'Cascadia Code';
+            position: relative;
+        } 
+
+        .catchy-text {
+            font-size: 15px; 
+            line-height: 1.8;
+            font-family: 'Cascadia Code';
+            margin-bottom: 1.2rem;
+        }
+        .comic-note {
+            font-family: 'Cascadia Code';
+            font-size: 15px;
+        }
+
+        .card {
+            border: 1px solid rgba(138, 43, 226, 0.4); /* Neon dark purple (like BlueViolet) */
+            box-shadow: 0 0 8px rgba(138, 43, 226, 0.2); /* subtle glow */
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background-color: #000000; /* optional for dark themes */
+            color: #fff; /* optional: for text contrast */
+        }
+
+        
+        
+        
+        .btn-subtle {
+            background-color: #2a2a2a;
+            color: #cccccc;
+            border: 1px solid #444;
+        }
+
+        .btn-subtle:hover {
+            background-color: #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .scroll-container {
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .testimonial-card {
+            height: 150px;            /* Fixed height */
+            width: 100%;              /* Responsive width */
+            max-width: 300px;         /* Optional: limit max size */
+            margin: 0 auto;           /* Center in column if needed */
+
+            background-color: #000;
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            box-shadow: 0 0 8px rgba(138, 43, 226, 0.2);
+            color: #fff;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        
+        .scroll-track {
+            display: flex;
+            gap: 1rem;
+            animation: scroll-left 30s linear infinite;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0%);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .scroll-cards::-webkit-scrollbar {
+            height: 6px;
+        }
+        .scroll-cards::-webkit-scrollbar-thumb {
+            background-color: #6f42c1;  /* Optional: purple scrollbar */
+            border-radius: 10px;
+        }
+        
+        .best-selling-books{
+            font-size: 15px;
+        }
+
+        .footer {
+            padding: 1rem;
+            font-size: 1rem;
+            background-color: #1a1a1a;
+            border-top: 1px solid #2c2c2c;
+            color: #888;
+        }
+
+        a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #ffffff;
+        }
+
+        input[type="text"] {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            color: #ccc;
+        }
+
+        input[type="text"]::placeholder {
+            color: #777;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div th:insert="fragments/navbar :: navbar"></div>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+             
+    
+     
+    <h3>Welcome to</h3>
+    <br>
+    
+    <h1 class="funny-heading mb-4">
+                <span>404 — Books Not Found</span>
+            </h1>
+
+            <p class="catchy-text fst-italic">
+                Hi visitor, congratulations on <span>successfully wasting</span> your time here...
+            </p>
+
+            <p class="catchy-text">
+                You can <strong>search</strong> books and even <strong>place orders</strong> —  
+                <span style="font-weight: bold;">but you’ll never receive the books<strong>The Reason?</strong> Error 404: Books Not Found</span>
+            </p>
+
+            <p class="catchy-text">
+                But before you call me a <strong>scammer</strong>, keep in mind — the only payment mode accepted is 
+                <strong>Cash on Delivery</strong>.  
+                So you're just wasting your <span>time</span>, not money.
+            </p>
+
+            <p class="catchy-text fst-italic">
+                Still here? Spot a bug? Do the noble thing: Inform us at - <a href="mailto:text2paulsaswata@gmail.com">text2paulsaswata@gmail.com</a>
+            </p>
+        </div>
+
+        <!-- Book Search -->
+        <form th:action="@{/search}" method="get" class="d-flex my-3" role="search">
+            <input
+                class="form-control me-2"
+                type="search"
+                name="query"
+                placeholder="Search by title, author, or genre"
+                aria-label="Search"
+                required
+            />
+            <button class="btn btn-outline-light btn-sm" type="submit">Search</button>
+        </form>
+        <br>
+        <br>
+
+        <!-- Browse by genres -->
+        <h2 class="mt-4 pb-3">Browse by Genre</h2>
+        <div class="row g-4 mb-4 pb-3">
+            <div class="col-md-3" th:each="genre : ${genres}">
+                <div class="card shadow">
+                    <div class="card-body text-center">
+                        <h5 class="card-title pb-1" th:text="${genre}">Fiction</h5>
+                        <br>
+                        <a th:href="@{/books(genre=${genre})}" class="btn btn-outline-light btn-sm">Explore</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Top Selling Books -->
+        
+     
+        <br>
+        <h2 class="mt-4 pb-3  ">Top-Selling Books</h2>
+        <br>
+        <div class="scroll-container mb-4 pb-3">
+            <div class="scroll-track d-flex flex-nowrap">
+                <div class="card me-3 shadow best-selling-books" style="min-width: 220px;" th:each="book : ${bestSellers}">
+                    <div class="card-body">
+                        <div class="card-title pb-1 mb-1">  <h5 th:text="${book.title}">Book Title</h5> </div>
+                        <hr class="my-2" style="border-top: 1px solid #888;"> 
+                        <p class="card-text" th:text="${book.author}">Author</p>
+                        <p class="card-text" th:text="${book.genre}">Genre</p>
+                        <p class="card-text"><strong th:text="'₹' + ${book.price}">₹0</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        
+        <!-- User Reviews -->
+        <div class="mb-5">
+            <h4 class="text-center text-light">Customer Reflections</h4>
+            <div class="row mt-4 text-center">
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 testimonial-card">
+                        <p class="comic-note">“Books never arrived, peace of mind did.”</p>
+                        <strong class="text-light">– Anonymous Enthusiast</strong>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 testimonial-card">
+                        <p class="comic-note">“Subtle. Elegant. Absolutely unproductive.”</p>
+                        <strong class="text-light">– A Mindful Visitor</strong>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 testimonial-card">
+                        <p class="comic-note">“It's the only store where silence is the service.”</p>
+                        <strong class="text-light">– GhostModeUser</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bug Report -->
+        <div class="text-center mb-5">
+            <h5 class="text-light">Have feedback?</h5>
+            <p class="text-light">Reach me at -
+                <a href="mailto:text2paulsaswata@gmail.com">text2paulsaswata@gmail.com</a>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer text-center">
+        &copy; 2025 404BooksNotFound &nbsp;|&nbsp; Built with irony, styled with restraint.
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</body>
+</html>

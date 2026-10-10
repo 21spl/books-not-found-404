@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Book</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <!-- External Fonts -->
+    
+<link href="https://fonts.cdnfonts.com/css/segoe-ui-4" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css(v='1.0.2')}">
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #eaeaea;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            font-family: 'Segoe UI', serif;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            color: #dcdcdc;
+        }
+
+        .form-control {
+            background-color: #1e1e1e;
+            border: 1px solid #444;
+            color: #f1f1f1;
+        }
+
+        .form-control:focus {
+            background-color: #1e1e1e;
+            border-color: #66afe9;
+            box-shadow: 0 0 0 0.2rem rgba(102, 175, 233, 0.25);
+            color: #fff;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .alert {
+            border-radius: 0.5rem;
+        }
+
+        .container {
+            background-color: #1a1a1a;
+            padding: 2rem;
+            border-radius: 12px;
+            
+        }
+
+        .footer {
+            margin-top: 2rem;
+            padding: 1rem;
+            color: #888;
+            font-size: 0.9rem;
+            border-top: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+    <div th:insert="fragments/admin-navbar :: admin-navbar"></div>
+
+<div class="container mt-5">
+    <h1>Add New Book</h1>
+    
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <form th:action="@{/admin/add_book}" method="post" th:object="${book}">
+        <div class="mb-3">
+            <label for="title" class="form-label">Book Title</label>
+            <input type="text" th:field="*{title}" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label for="author" class="form-label">Author</label>
+            <input type="text" th:field="*{author}" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label for="genre" class="form-label">Genre</label>
+            <input type="text" th:field="*{genre}" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" th:field="*{description}" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" step="0.01" th:field="*{price}" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" th:field="*{copies}" class="form-control" required />
+        </div>
+        <br>
+        <br>
+        <button type="submit" class="btn btn-primary w-100">Add Book</button>
+    </form>
+</div>
+
+<div class="footer text-center">
+    &copy; 2025 404BooksNotFound &nbsp;|&nbsp; Built with irony, styled with restraint.
+</div>
+
+<!-- Bootstrap Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

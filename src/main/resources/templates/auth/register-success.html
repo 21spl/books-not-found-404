@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <!-- After editing style.css -->
+<link rel="stylesheet" th:href="@{/css/style.css(v='1.0.2')}">
+
+    <title>Registration Successful</title>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Registration Successful!</h2>
+        <a th:href="@{/auth/login}">Go to login page</a>
+    </div>
+</body>
+</html>

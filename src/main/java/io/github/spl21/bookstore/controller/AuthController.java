@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -29,16 +31,19 @@ public class AuthController {
     private static final String JWT_COOKIE_NAME = "JWT";
 
     private final AuthService authService;
+    private final JwtDecoder jwtDecoder;
     private final long jwtExpirationSeconds;
     private final boolean secureCookie;
 
     public AuthController(
             AuthService authService,
+            JwtDecoder jwtDecoder,
             @Value("${jwt.expiration-seconds}") long jwtExpirationSeconds,
             @Value("${app.cookie.secure:true}") boolean secureCookie) {
 
         this.authService = authService;
         this.jwtExpirationSeconds = jwtExpirationSeconds;
+        this.jwtDecoder = jwtDecoder;
         this.secureCookie = secureCookie;
     }
 
@@ -112,6 +117,8 @@ public class AuthController {
         try {
             String token = authService.login(request);
 
+            System.out.println("Secure cookie enabled: " + secureCookie);
+
             ResponseCookie jwtCookie = ResponseCookie
                     .from(JWT_COOKIE_NAME, token)
                     .httpOnly(true)
@@ -123,6 +130,12 @@ public class AuthController {
 
             response.addHeader(
                     "Set-Cookie", jwtCookie.toString());
+
+            Jwt jwt = jwtDecoder.decode(token);
+
+            if (jwt.getClaimAsStringList("roles").contains("ROLE_ADMIN")) {
+                return "redirect:/admin/dashboard";
+            }
 
             return "redirect:/profile";
 
@@ -138,7 +151,6 @@ public class AuthController {
     }
 
     // ---------------- LOGOUT ----------------
-
     @PostMapping("/logout")
     public String logout(HttpServletResponse response) {
 
@@ -151,9 +163,8 @@ public class AuthController {
                 .maxAge(Duration.ZERO)
                 .build();
 
-        response.addHeader(
-                "Set-Cookie", expiredCookie.toString());
+        response.addHeader("Set-Cookie", expiredCookie.toString());
 
-        return "redirect:/auth/login";
+        return "auth/logout";
     }
 }

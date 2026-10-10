@@ -46,7 +46,7 @@ public class ProfileController {
         model.addAttribute("user", user);
         model.addAttribute("purchases", userPurchases);
 
-        return "profile";
+        return "customer/profile";
     }
 
     // Show all purchases belonging to the logged-in user
@@ -68,7 +68,7 @@ public class ProfileController {
 
         model.addAttribute("purchases", purchases);
 
-        return "purchase_history";
+        return "customer/purchase_history";
     }
 
     // Show details of a purchase, only if it belongs to the logged-in user
@@ -101,7 +101,7 @@ public class ProfileController {
         model.addAttribute("loggedInUser", user);
         model.addAttribute("purchase", purchase);
 
-        return "purchase_details";
+        return "customer/purchase_details";
     }
 
     // Resolve the authenticated username to the database User entity

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Browse Books</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.3rem;
+        }
+
+        .card {
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            box-shadow: 0 0 8px rgba(138, 43, 226, 0.2);
+            border-radius: 10px;
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .qty-input {
+            width: 60px;
+            text-align: center;
+            margin: 0 10px;
+        }
+
+        .add-to-cart .btn {
+            font-size: 1.3rem;
+            padding: 8px 12px;
+        }
+
+        .disabled-btn {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div th:insert="~{fragments/navbar :: navbar}"></div>
+
+<main class="container mt-4">
+
+    <h2 class="mb-4"
+        th:if="${genre != null}"
+        th:text="'Books in Genre: ' + ${genre}">
+        Books in Genre
+    </h2>
+
+    <h2 class="mb-4" th:if="${genre == null}">
+        Search Results
+    </h2>
+
+    <div th:if="${books != null}">
+
+        <div class="row" th:if="${!books.isEmpty()}">
+
+            <!-- Book list -->
+            <div class="col-md-12 mb-4"
+                 th:each="book : ${books}">
+
+                <div class="card h-100 shadow-sm">
+
+                    <div class="card-body">
+
+                        <h5 class="card-title"
+                            th:text="${book.title}">
+                            Book Title
+                        </h5>
+
+                        <p class="card-text">
+                            <strong>Author:</strong>
+                            <span th:text="${book.author}">Author Name</span>
+                            <br>
+
+                            <strong>Genre:</strong>
+                            <span th:text="${book.genre}">Genre</span>
+                            <br>
+
+                            <strong>Price:</strong>
+                            ₹<span th:text="${book.price}">0.00</span>
+                            <br>
+
+                            <strong>Copies Available:</strong>
+                            <span th:text="${book.copies}">0</span>
+                            <br>
+
+                            <span class="text-danger fw-semibold"
+                                  th:if="${book.copies == 0}">
+                                Sorry, this book is out of stock.
+                            </span>
+                        </p>
+
+                        <!-- Authenticated user: book in stock -->
+                        <div sec:authorize="isAuthenticated()"
+                             th:if="${book.copies > 0}">
+
+                            <div class="quantity-controls">
+
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm btn-decrease"
+                                        th:attr="data-max=${book.copies}"
+                                        aria-label="Decrease quantity">
+                                    −
+                                </button>
+
+                                <input type="number"
+                                       class="form-control qty-input"
+                                       value="1"
+                                       min="1"
+                                       th:attr="max=${book.copies}"
+                                       readonly
+                                       aria-label="Quantity">
+
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm btn-increase"
+                                        th:attr="data-max=${book.copies}"
+                                        aria-label="Increase quantity">
+                                    +
+                                </button>
+
+                            </div>
+
+                            <div class="add-to-cart text-end mt-2">
+
+                                <button type="button"
+                                        class="btn btn-success btn-add-to-cart"
+                                        th:attr="data-book-id=${book.id},
+                                                 data-max=${book.copies}">
+
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                    Add to Cart
+
+                                </button>
+
+                            </div>
+                        </div>
+
+                        <!-- Anonymous user -->
+                        <div sec:authorize="isAnonymous()"
+                             th:if="${book.copies > 0}">
+
+                            <a th:href="@{/auth/login}"
+                               class="btn btn-outline-primary">
+                                Login to add to cart
+                            </a>
+
+                        </div>
+
+                        <!-- Authenticated user: out of stock -->
+                        <div sec:authorize="isAuthenticated()"
+                             th:if="${book.copies == 0}">
+
+                            <div class="add-to-cart text-end mt-2">
+
+                                <button type="button"
+                                        class="btn btn-success disabled-btn"
+                                        disabled>
+
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                    Out of Stock
+
+                                </button>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty search results -->
+        <div class="alert alert-warning"
+             th:if="${books.isEmpty()}">
+            No books found for your search.
+        </div>
+
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer text-center">
+    &copy; 2025 404BooksNotFound
+    &nbsp;|&nbsp; Built with irony, styled with restraint.
+</footer>
+
+<!-- JavaScript libraries -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Increase quantity
+    document.querySelectorAll(".btn-increase").forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const controls = this.parentElement;
+            const input = controls.querySelector(".qty-input");
+            const max = Number(this.dataset.max);
+            const current = Number(input.value) || 1;
+
+            if (current < max) {
+                input.value = current + 1;
+            } else {
+                Swal.fire(
+                    "Stock Limit",
+                    `Only ${max} copies are available.`,
+                    "warning"
+                );
+            }
+        });
+    });
+
+    // Decrease quantity
+    document.querySelectorAll(".btn-decrease").forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const controls = this.parentElement;
+            const input = controls.querySelector(".qty-input");
+            const current = Number(input.value) || 1;
+
+            if (current > 1) {
+                input.value = current - 1;
+            }
+        });
+    });
+
+    // Add to cart
+    document.querySelectorAll(".btn-add-to-cart").forEach(function (button) {
+
+        button.addEventListener("click", async function () {
+
+            const card = this.closest(".card");
+            const bookId = Number(this.dataset.bookId);
+            const max = Number(this.dataset.max);
+            const quantityInput = card.querySelector(".qty-input");
+            const quantity = Number(quantityInput.value) || 1;
+
+            // Validate the book ID.
+            if (!Number.isInteger(bookId) || bookId <= 0) {
+                Swal.fire(
+                    "Error",
+                    "Invalid book ID. Please refresh the page and try again.",
+                    "error"
+                );
+                return;
+            }
+
+            // Validate quantity.
+            if (!Number.isInteger(quantity) || quantity < 1 || quantity > max) {
+                Swal.fire(
+                    "Invalid Quantity",
+                    `Choose a quantity between 1 and ${max}.`,
+                    "warning"
+                );
+                return;
+            }
+
+            const csrfToken = document.querySelector(
+                'meta[name="_csrf"]'
+            ).content;
+
+            const csrfHeader = document.querySelector(
+                'meta[name="_csrf_header"]'
+            ).content;
+
+            // Prevent repeated submissions while the request is running.
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = "Adding...";
+
+            try {
+
+                const response = await fetch(
+                    /*[[@{/cart/add}]]*/ '/cart/add',
+                    {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            [csrfHeader]: csrfToken
+                        },
+                        body: new URLSearchParams({
+                            bookId: String(bookId),
+                            quantity: String(quantity)
+                        })
+                    }
+                );
+
+                if (response.status === 401) {
+
+                    await Swal.fire(
+                        "Login Required",
+                        "Please log in to add items to your cart.",
+                        "info"
+                    );
+
+                    window.location.href =
+                        /*[[@{/auth/login}]]*/ '/auth/login';
+
+                    return;
+                }
+
+                if (response.status === 403) {
+
+                    const message = await response.text();
+
+                    throw new Error(
+                        message || "Access denied. Please check your login and permissions."
+                    );
+                }
+
+                if (!response.ok) {
+
+                    const message = await response.text();
+
+                    throw new Error(
+                        message || "Failed to add the book to your cart."
+                    );
+                }
+
+                const message = await response.text();
+
+                await Swal.fire(
+                    "Added!",
+                    message || "Book added to cart successfully!",
+                    "success"
+                );
+
+            } catch (error) {
+
+                Swal.fire(
+                    "Error",
+                    error.message || "An unexpected error occurred.",
+                    "error"
+                );
+
+            } finally {
+
+                this.disabled = false;
+                this.innerHTML = originalText;
+
+            }
+        });
+    });
+
+});
+
+/*]]>*/
+</script>
+
+</body>
+</html>
