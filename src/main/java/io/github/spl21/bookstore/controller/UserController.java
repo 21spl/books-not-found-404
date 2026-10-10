@@ -1,6 +1,7 @@
 package io.github.spl21.bookstore.controller;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.servlet.http.HttpSession;
@@ -37,8 +38,8 @@ public class UserController {
             return "register";
         }
         
-        // Using type-safe Role Enum instead of string literals
-        user.setRoles(List.of(Role.CUSTOMER));
+
+        user.setRoles(new ArrayList<>(List.of(Role.CUSTOMER)));
         
         boolean success = userService.registerUser(user);
         if (!success) {

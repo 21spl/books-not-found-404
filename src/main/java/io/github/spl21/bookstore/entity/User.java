@@ -1,6 +1,9 @@
 package io.github.spl21.bookstore.entity;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -26,6 +29,7 @@ public class User {
     private Long id;
 
     @NotBlank(message = "Name is required")
+    @Column(unique = true, nullable = false)
     private String username;
 
     @NotBlank(message = "Email is required")
@@ -34,16 +38,16 @@ public class User {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters long")
+    @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    private List<Role> roles = List.of(Role.CUSTOMER);
+    private Set<Role> roles = new HashSet<>(Set.of(Role.CUSTOMER));
 
-
-    @OneToMany(mappedBy = "user")
+    // mappedBy field name "user", but FK column name is "user_id"
+    @OneToMany(mappedBy = "user") // FK in purchase table 
     private List<Purchase> purchases;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)

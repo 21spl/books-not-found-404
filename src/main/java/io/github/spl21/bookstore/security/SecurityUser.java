@@ -8,11 +8,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import io.github.spl21.bookstore.entity.User;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter 
+
+
+
 public class SecurityUser implements UserDetails{
     
     private final User user;

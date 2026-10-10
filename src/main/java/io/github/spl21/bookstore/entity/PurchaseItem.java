@@ -35,11 +35,11 @@ public class PurchaseItem {
     @PositiveOrZero
     private double priceAtPurchase;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY) // means many purchase items mapped to one purchase
     @JoinColumn(name = "purchase_id")
     private Purchase purchase;
 
-    @ManyToOne
+    @ManyToOne // means many purchase items rows mapped to one book row
     @JoinColumn(name = "book_id")
     private Book book;
 }

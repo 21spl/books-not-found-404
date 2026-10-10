@@ -74,12 +74,20 @@
 			<scope>provided</scope>
 		</dependency>
 
+
 		<!-- FIXED: Single comprehensive test harness starter replaces your old invalid split items -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		
 	</dependencies>
 
 	
