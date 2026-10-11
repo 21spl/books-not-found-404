@@ -1,10 +1,16 @@
 package io.github.spl21.bookstore.repository;
 
-import io.github.spl21.bookstore.entity.Book;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Optional;
+
+import jakarta.persistence.LockModeType;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import io.github.spl21.bookstore.entity.Book;
 
 
 public interface BookRepository extends JpaRepository<Book, Long> {
@@ -22,4 +28,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     // 3. Custom selection requiring a specific JPQL query
     @Query("SELECT DISTINCT b.genre FROM Book b WHERE b.genre IS NOT NULL")
     List<String> findDistinctGenres();
+
+    // 4. fetches a specific book row and locks it explicitly
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Book b WHERE b.id = :id")
+    Optional<Book> findByIdWithPessimisticWrite(@Param("id") Long id);
 }

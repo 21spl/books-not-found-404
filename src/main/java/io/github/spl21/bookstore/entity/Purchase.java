@@ -3,25 +3,21 @@ package io.github.spl21.bookstore.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+
+import io.github.spl21.bookstore.enums.PaymentStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "purchase")
+@Table(name = "purchase",
+    indexes = {
+        @Index(name = "idx_stripe_session", columnList = "stripe_session_id", unique = true)
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -51,6 +47,14 @@ public class Purchase {
     private String address;
 
     private double totalAmount;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 30)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
+    @Column(name = "stripe_session_id", unique = true)
+    private String stripeSessionId;
+
 
     public void addItem(PurchaseItem item) {
         if (this.items == null) {
