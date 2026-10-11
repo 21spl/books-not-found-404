@@ -66,6 +66,28 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!--Database migration tools-->
+		<!-- Core Flyway Migration Engine -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+
+		<!-- Flyway Database Extension for PostgreSQL -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+
+		<!--stripe dependency-->
+		<dependency>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>24.0.0</version>
+		</dependency>
+
+
 		
 		<!-- Lombok Dependency - version managed natively by Spring Parent, scope must be annotationProcessor and provided -->
 		<dependency>

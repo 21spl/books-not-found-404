@@ -223,7 +223,8 @@
                     <div class="card-body text-center">
                         <h5 class="card-title pb-1" th:text="${genre}">Fiction</h5>
                         <br>
-                        <a th:href="@{/books(genre=${genre})}" class="btn btn-outline-light btn-sm">Explore</a>
+
+                        <a th:href="@{/explore_genre(genre=${genre})}" class="btn btn-outline-light btn-sm">Explore</a>
                     </div>
                 </div>
             </div>

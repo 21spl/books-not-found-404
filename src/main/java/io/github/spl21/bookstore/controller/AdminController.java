@@ -61,7 +61,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Something went wrong while adding the book.");
         }
-        return "redirect:/admin/add_book";
+        return "redirect:/admin/view_books";
     }
     
     // show edit book form

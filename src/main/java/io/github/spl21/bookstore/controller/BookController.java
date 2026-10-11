@@ -28,7 +28,7 @@ public class BookController {
         return "public/book_list";
     }
 
-    @GetMapping("/books")
+    @GetMapping("/explore_genre")
     public String exploreGenre(@RequestParam("genre") String genre, Model model) {
         List<Book> booksByGenre = bookService.searchBooksByGenre(genre);
         model.addAttribute("genre", genre);

@@ -156,6 +156,7 @@ public class SecurityConfig {
                         "/",
                         "/auth/**",
                         "/search/*",
+                        "/explore_genre",
                         "/books/*",
                         "/css/**",
                         "/js/**",
