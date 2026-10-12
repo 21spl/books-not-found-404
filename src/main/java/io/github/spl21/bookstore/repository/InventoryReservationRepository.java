@@ -1,6 +1,7 @@
 package io.github.spl21.bookstore.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,5 +26,7 @@ public interface InventoryReservationRepository extends JpaRepository<InventoryR
     // find active reservation for a specific user and book (for payment retries)
     Optional<InventoryReservation> findByBookIdAndUserIdAndExpiresAtAfter(Long bookId, Long userId, 
         LocalDateTime now);
-    
+
+    // find the list of active reservation for a specific user 
+    List<InventoryReservation> findByUserIdAndExpiresAtAfter(Long userId, LocalDateTime now);
 }

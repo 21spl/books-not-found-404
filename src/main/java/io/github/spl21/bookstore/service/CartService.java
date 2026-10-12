@@ -12,29 +12,32 @@ import io.github.spl21.bookstore.entity.CartItem;
 import io.github.spl21.bookstore.entity.User;
 import io.github.spl21.bookstore.repository.CartItemRepository;
 import io.github.spl21.bookstore.repository.CartRepository;
+import lombok.RequiredArgsConstructor;
 
 
 @Service
 @Transactional
+@RequiredArgsConstructor 
 public class CartService {
     
-    
     private final CartRepository cartRepository;
-    
     private final CartItemRepository cartItemRepository;
+    private final UserService userService;
 
-
-    CartService(CartRepository cartRepository, CartItemRepository cartItemRepository) {
-        this.cartRepository = cartRepository;
-        this.cartItemRepository = cartItemRepository;
-    }
-    
     @Transactional(readOnly = true)
     public Cart getCartByUser(User user) {
         Long userId = user.getId(); // Migrated to Long
         return cartRepository.findByUser_Id(userId).orElse(null);
     }
-    
+
+    @Transactional(readOnly = true)
+    public Cart getCartByUsername(String username) {
+        Long userId = userService.findUserByUsername(username).getId();
+        return cartRepository.findByUser_Id(userId).orElse(null);
+    }
+
+
+    @Transactional 
     public void addBookToCart(User user, Book book, int quantity) {
         if (quantity < 1) {
             throw new IllegalArgumentException("Quantity must be at least 1.");

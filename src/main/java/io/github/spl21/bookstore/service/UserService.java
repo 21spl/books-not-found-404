@@ -30,7 +30,11 @@ public class UserService {
     public User findUserById(Long id) { // Updated identifier type to Long
         return userRepository.findById(id).orElse(null);
     }
-    
+
+    @Transactional(readOnly = true)
+    public User findUserByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
     
     
     @Transactional(readOnly = true)
@@ -46,5 +50,9 @@ public class UserService {
     
     public void deleteUser(Long userId) { // Updated identifier type to Long
         userRepository.deleteById(userId);
+    }
+
+    public Long getUserIdByUsername(String username) {
+        return findUserByUsername(username).getId();
     }
 }
