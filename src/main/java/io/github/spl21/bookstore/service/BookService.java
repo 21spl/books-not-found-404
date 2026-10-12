@@ -1,5 +1,6 @@
 package io.github.spl21.bookstore.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,17 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.github.spl21.bookstore.entity.Book;
 import io.github.spl21.bookstore.repository.BookRepository;
+import io.github.spl21.bookstore.repository.InventoryReservationRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
+@RequiredArgsConstructor 
 public class BookService {
     
     
     private final BookRepository bookRepository;
+    private final InventoryReservationRepository inventoryReservationRepository;
     
-    public BookService(BookRepository bookRepository) {
-        this.bookRepository = bookRepository;
-    }
+   
 
     
     public void addBook(Book book) {
@@ -84,5 +87,13 @@ public class BookService {
     @Transactional(readOnly = true)
     public List<Book> searchBooksByGenre(String genre) {
         return bookRepository.findByGenreContainingIgnoreCase(genre);
+    }
+
+    @Transactional(readOnly = true)
+    public int getActualStock(Long bookId){
+        Book book = bookRepository.findById(bookId).orElse(null);
+        int copies = book.getCopies();
+        int reservedQuantity = inventoryReservationRepository.getActiveReservedQuantity(bookId, LocalDateTime.now());
+        return copies - reservedQuantity;
     }
 }

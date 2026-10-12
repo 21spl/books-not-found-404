@@ -19,7 +19,7 @@ public class StripeService {
 
     @Value("${stripe.api.key}")
     private String apiKey;
-
+ 
     @Value("${stripe.success.url}")
     private String successUrl;
 
@@ -75,9 +75,9 @@ public class StripeService {
         }
     }
 
-    /**
-     * Extracts the raw 'cs_test_...' identification token from a complete Stripe redirect URL.
-     */
+    
+    // Extracts the raw 'cs_test_...' identification token from a complete Stripe redirect URL.
+
     public String extractSessionIdFromUrl(String url) {
         try {
             URI uri = new URI(url);

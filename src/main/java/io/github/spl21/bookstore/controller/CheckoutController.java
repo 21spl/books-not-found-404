@@ -20,19 +20,17 @@ import io.github.spl21.bookstore.exception.UserNotFoundException;
 import io.github.spl21.bookstore.service.CheckoutService;
 import lombok.RequiredArgsConstructor;
 
-
 @Controller
+@RequiredArgsConstructor
 @RequestMapping("/checkout")
-@RequiredArgsConstructor 
 public class CheckoutController {
 
-   private final CheckoutService checkoutService;
+    private final CheckoutService checkoutService;
 
-   @GetMapping()
-   public String showCheckoutForm(Authentication authentication, Model model) {
-        try{
+    @GetMapping()
+    public String showCheckoutForm(Authentication authentication, Model model) {
+        try {
             CheckoutSummaryDTO summary = checkoutService.getCheckoutSummary(authentication.getName());
-
             model.addAttribute("cartItems", summary.getCartItems());
             model.addAttribute("totalAmount", summary.getTotalAmount());
 
@@ -41,26 +39,20 @@ public class CheckoutController {
                 return "customer/cart";
             }
             return "customer/checkout";
-
-        }catch(UserNotFoundException e){
+        } catch (UserNotFoundException e) {
             return "redirect:/auth/login";
-        } catch (EmptyCartException e) {
-            return "redirect:/cart";
-        } catch(NotEnoughStockException e){
+        } catch (EmptyCartException | NotEnoughStockException e) {
             return "redirect:/cart";
         }
-        
-   }
+    }
 
-
-   @PostMapping("/placeOrder")
+    @PostMapping("/placeOrder")
     public String placeOrder(
             @Valid @ModelAttribute("orderForm") OrderFormDto form, 
             BindingResult bindingResult,                       
             Authentication authentication, 
             Model model) {
 
-        // If validations failed, skip business logic and return the error view immediately
         if (bindingResult.hasErrors()) {
             CheckoutSummaryDTO summary = checkoutService.getCheckoutSummary(authentication.getName());
             model.addAttribute("cartItems", summary.getCartItems());
@@ -69,20 +61,20 @@ public class CheckoutController {
         }
 
         try {
-            checkoutService.placeOrder(authentication.getName(), form.getAddress(), form.getPhone());
-            return "redirect:/checkout/order_success";
+            // Get the raw redirect URL string directly from the service layer
+            String stripeUrl = checkoutService.initiateCheckoutPayment(authentication.getName(), form);
+            return "redirect:" + stripeUrl;
         } catch (OutOfStockException e) {
             return "customer/checkout";
         }
     }
 
-
-    @GetMapping("/order_success")
+    @GetMapping("/success")
     public String showOrderSuccessPage() {
         return "customer/order_success";
     }
 
-    @GetMapping("/order_cancel)")
+    @GetMapping("/cancel")
     public String showOrderCancelPage() {
         return "customer/order_cancel";
     }

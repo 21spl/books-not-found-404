@@ -20,8 +20,9 @@ public class InvoiceDTO {
     List<InventoryReservation> invoiceItems;
     LocalDateTime generatedAt;
     String stripeUrl;
+    String stripeSessionId;
 
     // no args constructor
-    public InvoiceDTO() {}
+    public InvoiceDTO() {}   
 
 }

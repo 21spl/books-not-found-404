@@ -1,12 +1,13 @@
 package io.github.spl21.bookstore.repository;
 
-import io.github.spl21.bookstore.entity.Purchase;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import java.util.List;
-import java.util.Optional;
+
+import io.github.spl21.bookstore.entity.Purchase;
 
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
@@ -28,4 +29,6 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
            "JOIN FETCH i.book " +
            "ORDER BY p.purchaseDate DESC")
     List<Purchase> findAllPurchasesWithUserAndItems();
+
+    Optional<Purchase> findByStripeSessionId(String stripeSessionId);
 }

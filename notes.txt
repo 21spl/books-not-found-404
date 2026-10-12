@@ -183,8 +183,9 @@ public class CheckoutController {
         }
 
         try {
-            checkoutService.initiateCheckoutPayment(authentication.getName(), form.getAddress(), form.getPhone());
-            return "redirect:/checkout/payment_page";
+            InvoiceDTO = checkoutService.initiateCheckoutPayment(authentication.getName(), form);
+            String stripeUrl = invoiceDto.getStripeUrl();
+            return "redirect:"+stripeUrl;
         } catch (OutOfStockException e) {
             return "customer/checkout";
         }
@@ -205,8 +206,8 @@ public class CheckoutController {
     
 }
  
-  ==========================================================================================================================================
-checkoutservice
+CHECKOUTSERVICE=====================================================================================================================================
+
 
 @Transactional
 public CartSummaryDTO getCartSummary(String username){
@@ -244,7 +245,7 @@ public CartSummaryDTO getCartSummary(String username){
 }
 
 @Transactional
-public void initiateCheckoutPayment(String username, OrderFormDTO orderForm){
+public InvoiceDTO initiateCheckoutPayment(String username, OrderFormDTO orderForm){
 	
 	// 1. get all reservations of by username
 	List<InventoryReservation> checkoutItems =  reservationService.getAllReservationsByUsername(username);
@@ -257,16 +258,229 @@ public void initiateCheckoutPayment(String username, OrderFormDTO orderForm){
 	
 	// 3. create InvoiceDTO
 	User user = userRepository.findByUsername(username);
-	InvoiceDTO invoice = new InvoiceDTO(checkoutItems, totalAmount, orderForm.getPhone(), orderForm.getAddress());
-	invoice.setInvoiceItems(checkoutItems);
-	invoice.setAmount(totalAmount);
-	invoice.setPhone(orderForm.getPhone());
-	invoice.setAddress(orderForm.getAddress);
-	invoice.setFullname(user.getName())
-	invoice.setEmail(user.getEmail());
-	invoice.setgeneratedAt(LocalDateTime.now());
+	InvoiceDTO invoiceDto = new InvoiceDTO(checkoutItems, totalAmount, orderForm.getPhone(), orderForm.getAddress());
+	invoiceDto.setInvoiceItems(checkoutItems);
+	invoiceDto.setAmount(totalAmount);
+	invoiceDto.setPhone(orderForm.getPhone());
+	invoiceDto.setAddress(orderForm.getAddress);
+	invoiceDto.setFullname(user.getName())
+	invoiceDto.setEmail(user.getEmail());
+	invoiceDto.setgeneratedAt(LocalDateTime.now());
 	
 	// 4. call createCheckoutSession of StripeService method
-	String stripeUrl = createCheckoutSession(InvoiceDTO)
+	String stripeUrl = stripeService.createCheckoutSession(InvoiceDTO)
+    String stripeSessionId = stripeService.extractSessionIdFromUrl(stripeUrl);
 
+    invoiceDto.setStripeUrl(stripeUrl);
+    invoiceDto.setStripeSessionId(stripeSessionId);
+
+
+    return invoiceDto;
+}
+
+STRIPESERVICE=====================================================================================================================
+
+@Service
+public class StripeService {
+
+    @Value("${stripe.api.key}")
+    private String apiKey;
+
+    @Value("${stripe.success.url}")
+    private String successUrl;
+
+    @Value("${stripe.cancel.url}")
+    private String cancelUrl;
+
+    @PostConstruct
+    public void init() {
+        // Initialize the Stripe context globally upon application initialization
+        Stripe.apiKey = this.apiKey;
+    }   
+
+    // createCheckoutSession
+    public String createCheckoutSession(InvoiceDTO invoice){
+
+        SessionCreateParams.Builder sessionBuilder = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl(cancelUrl)
+                .setCustomerEmail(invoice.getEmail()); // Auto-fill user email on Stripe gate
+
+        // Add each immutable snapshot item into the Stripe billing builder mapping
+        for (InventoryReservation item : invoice.getInvoiceItems()) {
+            // Conversion Rule: Stripe processes financial amounts in sub-units (e.g., Paise for INR)
+            long unitAmountInSubUnits = Math.round(item.getTotalValue() * 100);
+
+            sessionBuilder.addLineItem(
+                SessionCreateParams.LineItem.builder()
+                    .setQuantity((long) item.getQuantity())
+                    .setPriceData(
+                        SessionCreateParams.LineItem.PriceData.builder()
+                            .setCurrency("inr") // Set to Indian Rupee (or your target currency)
+                            .setUnitAmount(unitAmountInSubUnits)
+                            .setProductData(
+                                SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                    .setName(item.getBook().getTitle())
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .build()
+            );
+        }
+
+        try {
+            // Send API call out to Stripe servers to establish the transaction frame
+            Session session = Session.create(sessionBuilder.build());
+            return session.getUrl(); // Returns the unique hosted billing portal redirect link
+
+        } catch (StripeException e) {
+            throw new PaymentGatewayException("Failed to establish processing terminal link with Stripe", e);
+        }
+    }
+
+    // extract session id from url
+    public String extractSessionIdFromUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            String path = uri.getPath();
+            // Stripe payment links standard: /c/pay/cs_test_XYZ...
+            String[] segments = path.split("/");
+            for (String segment : segments) {
+                if (segment.startsWith("cs_")) {
+                    return segment;
+                }
+            }
+            throw new PaymentGatewayException("Invalid transaction mapping token parsed from checkout session wrapper");
+        } catch (URISyntaxException | NullPointerException e) {
+            throw new PaymentGatewayException("Failed to decode remote tracking metadata tokens from gateway URL", e);
+        }
+    }
+}
+
+
+STRIPEWEBHOOKCONTROLLER=====================================================================================================================
+
+package io.github.spl21.bookstore.controller;
+
+
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.Event;
+import com.stripe.model.checkout.Session;
+import com.stripe.net.Webhook;
+import io.github.spl21.bookstore.service.FulfillmentService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/api/webhooks")
+public class StripeWebhookController {
+
+    @Value("${stripe.webhook.secret}")
+    private String webhookSecret;
+
+    private final FulfillmentService fulfillmentService;
+
+    public StripeWebhookController(FulfillmentService fulfillmentService) {
+        this.fulfillmentService = fulfillmentService;
+    }
+
+    /**
+     * Public unauthenticated webhook listener endpoint targeted by Stripe servers.
+     */
+    @PostMapping("/stripe")
+    public ResponseEntity<String> handleStripeWebhook(
+            @RequestBody String payload,
+            @RequestHeader("Stripe-Signature") String sigHeader) {
+
+        Event event;
+
+        try {
+            // Security Guard: Verify the request origin and cryptographic signature integrity
+            event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
+        } catch (SignatureVerificationException e) {
+            // Reject fake or tampered payloads immediately
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature token validation");
+        }
+
+        // Handle the specific payment confirmation event type
+        if ("checkout.session.completed".equals(event.getType())) {
+            // Extract the session data payload structure
+            Session session = (Session) event.getDataObjectDeserializer().getObject()
+                    .orElse(null);
+
+            if (session != null) {
+                // Trigger the core database transaction using the session identifier token
+                fulfillmentService.fulfillOrder(session.getId());
+            }
+        }
+
+        // Acknowledge receipt of the webhook back to Stripe with a clean 200 OK
+        return ResponseEntity.ok("Success");
+    }
+}
+
+
+============================================================================
+Service
+public class FulfillmentService {
+
+    private final PurchaseRepository purchaseRepository;
+    private final InventoryReservationRepository reservationRepository;
+    private final CartService cartService;
+    private final BookService bookService; // Assumes your legacy bookService has updateBook method
+
+    public FulfillmentService(
+            PurchaseRepository purchaseRepository,
+            InventoryReservationRepository reservationRepository,
+            CartService cartService,
+            BookService bookService) {
+        this.purchaseRepository = purchaseRepository;
+        this.reservationRepository = reservationRepository;
+        this.cartService = cartService;
+        this.bookService = bookService;
+    }
+
+    /**
+     * Executes the final atomic fulfillment updates under strict transaction isolation boundaries.
+     */
+    @Transactional
+    public void fulfillOrder(InvoiceDto invoiceDto) {
+
+        // 1. Fetch the targeted pending purchase record via the indexed stripeSessionId string
+        Purchase purchase = purchaseRepository.findByStripeSessionId(stripeSessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase not found for session tracking: " + stripeSessionId));
+
+        // Idempotency Check: Webhooks can occasionally fire multiple times for the same transaction frame.
+        // If it's already processed, terminate execution cleanly to prevent duplicate stock reductions.
+        if (purchase.getPaymentStatus() == PaymentStatus.PAID) {
+            return;
+        }
+
+        User user = purchase.getUser();
+
+        // 2. Loop through each snapshot item, mutate core inventory levels, and drop reservations
+        for (PurchaseItem item : purchase.getItems()) {
+            Book book = item.getBook();
+
+            // Permanently modify the absolute catalog levels inside database state scope
+            // Note: Hibernate automatically applies the @Version optimistic check on flush here.
+            book.setCopies(book.getCopies() - item.getQuantity());
+            bookService.updateBook(book);
+
+            // Clean up and clear the temporary reservation record since the sale is finalized
+            reservationRepository.deleteByBookIdAndUserId(book.getId(), user.getId());
+        }
+
+        // 3. Complete the state machine transition
+        purchase.setPaymentStatus(PaymentStatus.PAID);
+        purchaseRepository.save(purchase);
+
+        // 4. Safely clear out the user's volatile cart items since they have formally bought the books
+        cartService.clearCart(user);
+    }
 }

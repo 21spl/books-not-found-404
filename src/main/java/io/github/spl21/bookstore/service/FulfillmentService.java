@@ -11,28 +11,20 @@ import io.github.spl21.bookstore.enums.PaymentStatus;
 import io.github.spl21.bookstore.exception.ResourceNotFoundException;
 import io.github.spl21.bookstore.repository.InventoryReservationRepository;
 import io.github.spl21.bookstore.repository.PurchaseRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class FulfillmentService {
 
     private final PurchaseRepository purchaseRepository;
     private final InventoryReservationRepository reservationRepository;
     private final CartService cartService;
-    private final BookService bookService; // Assumes your legacy bookService has updateBook method
-
-    public FulfillmentService(
-            PurchaseRepository purchaseRepository,
-            InventoryReservationRepository reservationRepository,
-            CartService cartService,
-            BookService bookService) {
-        this.purchaseRepository = purchaseRepository;
-        this.reservationRepository = reservationRepository;
-        this.cartService = cartService;
-        this.bookService = bookService;
-    }
+    private final BookService bookService; // Assumes your legacy bookService manages entity flushes
 
     /**
-     * Executes the final atomic fulfillment updates under strict transaction isolation boundaries.
+     * Executes the final atomic fulfillment updates under strict transaction boundaries
+     * once Stripe fires a successful payment confirmation webhook.
      */
     @Transactional
     public void fulfillOrder(String stripeSessionId) {
@@ -67,5 +59,33 @@ public class FulfillmentService {
 
         // 4. Safely clear out the user's volatile cart items since they have formally bought the books
         cartService.clearCart(user);
+    }
+
+    /**
+     * Safely cancels a pending order when Stripe notifies us of an expiration or failure.
+     * Keeps history row intact for business analytics, but frees locked stock instantly.
+     */
+    @Transactional
+    public void cancelOrder(String stripeSessionId) {
+        Purchase purchase = purchaseRepository.findByStripeSessionId(stripeSessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase not found for session: " + stripeSessionId));
+
+        // Only cancel if the state is currently PENDING
+        if (purchase.getPaymentStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+
+        // 1. Transition the state machine to FAILED instead of deleting the tracking row
+        purchase.setPaymentStatus(PaymentStatus.FAILED);
+        purchaseRepository.save(purchase);
+
+        // 2. Instantly release the inventory reservations so other shoppers can buy the books
+        User user = purchase.getUser();
+        for (PurchaseItem item : purchase.getItems()) {
+            reservationRepository.deleteByBookIdAndUserId(item.getBook().getId(), user.getId());
+        }
+
+        // User's Cart remains untouched! Because cartService.clearCart(user) is 
+        // deliberately omitted here, the user can easily review their cart and retry payment.
     }
 }

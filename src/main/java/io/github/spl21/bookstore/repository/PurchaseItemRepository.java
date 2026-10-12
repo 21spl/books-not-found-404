@@ -9,5 +9,7 @@ public interface PurchaseItemRepository extends JpaRepository<PurchaseItem, Long
 
     List<PurchaseItem> findByPurchase_Id(Long purchaseId);
 
+    
+
   
 }
