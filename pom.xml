@@ -81,11 +81,13 @@
 		</dependency>
 
 		<!--stripe dependency-->
+		<!-- Upgraded Stripe dependency matching contemporary API schemas -->
 		<dependency>
 			<groupId>com.stripe</groupId>
 			<artifactId>stripe-java</artifactId>
-			<version>24.0.0</version>
+			<version>34.0.0</version> 
 		</dependency>
+
 
 
 		

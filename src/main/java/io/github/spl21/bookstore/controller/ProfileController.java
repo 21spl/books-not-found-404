@@ -43,7 +43,7 @@ public class ProfileController {
         User user = optionalUser.get();
 
         List<Purchase> userPurchases =
-                purchaseService.findAllPurchaseByUserId(user.getId());
+                purchaseService.findSuccessfulPurchases(user.getId());
 
         model.addAttribute("user", user);
         model.addAttribute("purchases", userPurchases);

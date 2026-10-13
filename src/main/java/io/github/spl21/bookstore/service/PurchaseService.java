@@ -51,6 +51,6 @@ public class PurchaseService {
 
     // find all purchases for a user where payment status is paid
     public List<Purchase> findSuccessfulPurchases(Long userId) {
-        return purchaseRepository.findByUser_IdAndPaymentStatus(userId, PaymentStatus.PAID);
+        return purchaseRepository.findPurchasesByUserAndStatus(userId, PaymentStatus.PAID);
     }
 }

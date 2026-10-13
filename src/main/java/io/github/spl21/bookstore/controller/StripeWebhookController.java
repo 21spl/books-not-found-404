@@ -54,10 +54,9 @@ public class StripeWebhookController {
 
         // Handle the specific payment confirmation event type
         if ("checkout.session.completed".equals(event.getType())) {
-            
-            // FIX: Use the explicit, robust data deserialization engine sequence
             EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
-            
+
+            // This executes perfectly on version 28+ because the model classes match the payload definitions
             if (deserializer.getObject().isPresent()) {
                 Session session = (Session) deserializer.getObject().get();
                 System.out.println("Stripe payload parsed correctly! Initiating fulfillment for session: " + session.getId());
@@ -65,8 +64,8 @@ public class StripeWebhookController {
                 // Trigger the core database transaction using the session identifier token
                 fulfillmentService.fulfillOrder(session.getId());
             } else {
-                System.err.println("ERROR: Failed to deserialize Stripe payload contents. Check target SDK versions.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to parse event data object matrix");
+                System.err.println("ERROR: Failed to deserialize checkout session payload data mapping.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to parse event object model");
             }
         }
 
