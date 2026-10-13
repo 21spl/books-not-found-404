@@ -126,19 +126,30 @@
     <div class="container mt-4">
 
         <!-- Empty Cart Message -->
-        <div th:if="${cartItems == null or #lists.isEmpty(cartItems)}">
+        <div id="empty-cart-message"
+             th:style="${cartItems == null or #lists.isEmpty(cartItems)}
+                        ? 'display: block;'
+                        : 'display: none;'">
+
             <div class="alert alert-info"
                  style="font-size: 20px; text-align: center; font-weight: bold">
                 Your Cart is Empty...
             </div>
+
         </div>
 
-        <!-- Cart cards -->
-        <div th:if="${cartItems != null and !#lists.isEmpty(cartItems)}">
+        <!-- Cart content -->
+        <div id="cart-content"
+             th:if="${cartItems != null and !#lists.isEmpty(cartItems)}">
 
-            <div class="row row-cols-1 row-cols-md-2 g-4">
+            <!-- Cart cards -->
+            <div class="row row-cols-1 row-cols-md-2 g-4"
+                 id="cart-items-container">
 
-                <div class="col" th:each="item : ${cartItems}">
+                <div class="col cart-item-col"
+                     th:each="item : ${cartItems}"
+                     th:attr="data-item-id=${item.id},
+                              data-unit-price=${item.book.price}">
 
                     <div class="card h-100 shadow neon-border bg-dark text-white">
 
@@ -160,7 +171,8 @@
 
                             <p class="card-text item-subtotal">
                                 <strong>Total:</strong>
-                                ₹<span th:text="${item.quantity * item.book.price}"></span>
+                                ₹<span class="item-subtotal-value"
+                                       th:text="${item.quantity * item.book.price}"></span>
                             </p>
 
                             <!-- Quantity controls -->
@@ -222,7 +234,8 @@
             <div class="mt-5 text-end">
                 <h4>
                     Total Amount:
-                    ₹<span th:text="${totalAmount}"></span>
+                    ₹<span id="cart-total"
+                           th:text="${totalAmount}"></span>
                 </h4>
             </div>
 
@@ -287,15 +300,24 @@
                 ? csrfHeaderElement.content
                 : null;
 
+            /*
+             * Keep track of items with an operation in progress.
+             * This prevents duplicate requests for the same item.
+             */
             const pendingItems = new Set();
+
+            const cartContent = document.getElementById("cart-content");
+            const emptyCartMessage =
+                document.getElementById("empty-cart-message");
 
             /*
              * Send a POST request using the existing controller endpoints.
+             * The server remains responsible for validating the operation.
              */
-            function postRequest(url, data) {
+            async function postRequest(url, data) {
 
                 const headers = {
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    "Content-Type": "application/x-www-form-urlencoded"
                 };
 
                 if (csrfToken && csrfHeader) {
@@ -304,77 +326,211 @@
 
                 const body = new URLSearchParams(data).toString();
 
-                return fetch(url, {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method: "POST",
                     headers: headers,
                     body: body
-                }).then(async function (response) {
+                });
 
-                    const text = await response.text();
+                const responseText = await response.text();
 
-                    if (!response.ok) {
-                        throw new Error(
-                            text || "The request could not be completed."
+                if (!response.ok) {
+                    throw new Error(
+                        responseText || "The request could not be completed."
+                    );
+                }
+
+                return responseText;
+            }
+
+            /*
+             * Format amounts consistently to two decimal places.
+             */
+            function formatAmount(amount) {
+                return amount.toFixed(2);
+            }
+
+            /*
+             * Recalculate the total from the quantities currently displayed.
+             *
+             * This also handles rollback after a failed request and prevents
+             * one item's rollback from overwriting another item's total.
+             */
+            function recalculateCartTotal() {
+
+                const totalElement = document.getElementById("cart-total");
+
+                if (!totalElement || !cartContent) {
+                    return;
+                }
+
+                let total = 0;
+
+                document.querySelectorAll(".cart-item-col")
+                    .forEach(function (card) {
+
+                        const unitPrice = Number(
+                            card.getAttribute("data-unit-price")
                         );
-                    }
 
-                    return text;
+                        const itemId = card.getAttribute("data-item-id");
+
+                        const quantityInput = document.getElementById(
+                            "qty-" + itemId
+                        );
+
+                        if (quantityInput && Number.isFinite(unitPrice)) {
+                            const quantity = Number(quantityInput.value) || 0;
+                            total += unitPrice * quantity;
+                        }
+
+                    });
+
+                totalElement.textContent = formatAmount(total);
+            }
+
+            /*
+             * Update an individual item's displayed subtotal.
+             */
+            function updateItemSubtotal(card, quantity) {
+
+                const unitPrice = Number(
+                    card.getAttribute("data-unit-price")
+                );
+
+                const subtotalElement =
+                    card.querySelector(".item-subtotal-value");
+
+                if (!subtotalElement || !Number.isFinite(unitPrice)) {
+                    return;
+                }
+
+                subtotalElement.textContent =
+                    formatAmount(unitPrice * quantity);
+            }
+
+            /*
+             * Find all quantity controls belonging to one item.
+             */
+            function getQuantityButtons(itemId) {
+
+                return document.querySelectorAll(
+                    '.btn-decrease[data-item-id="' + itemId + '"], ' +
+                    '.btn-increase[data-item-id="' + itemId + '"]'
+                );
+            }
+
+            /*
+             * Enable or disable the quantity controls for one item.
+             */
+            function setQuantityButtonsDisabled(itemId, disabled) {
+
+                getQuantityButtons(itemId).forEach(function (button) {
+                    button.disabled = disabled;
                 });
             }
 
             /*
-             * Update the cart quantity.
+             * Display a short success message without blocking the page.
              */
-            function updateQuantity(itemId, quantity, input, oldQuantity) {
+            function showSuccessToast(title) {
+
+                Swal.fire({
+                    toast: true,
+                    position: "top-end",
+                    icon: "success",
+                    title: title,
+                    showConfirmButton: false,
+                    timer: 1600,
+                    timerProgressBar: true
+                });
+            }
+
+            /*
+             * Update the quantity.
+             *
+             * IMPORTANT:
+             * 1. Update the UI immediately.
+             * 2. Send the request to the server.
+             * 3. Keep the change if successful.
+             * 4. Restore the previous quantity if rejected.
+             *
+             * No page reload is performed.
+             */
+            async function updateQuantity(itemId, newQuantity, input) {
 
                 if (pendingItems.has(itemId)) {
                     return;
                 }
 
+                const card = input.closest(".cart-item-col");
+
+                if (!card) {
+                    return;
+                }
+
+                const oldQuantity = Number(input.value);
+
+                if (!Number.isInteger(newQuantity) || newQuantity < 1) {
+                    return;
+                }
+
+                if (newQuantity === oldQuantity) {
+                    return;
+                }
+
                 pendingItems.add(itemId);
+                setQuantityButtonsDisabled(itemId, true);
 
-                const buttons = document.querySelectorAll(
-                    '[data-item-id="' + itemId + '"].btn-decrease, ' +
-                    '[data-item-id="' + itemId + '"].btn-increase'
-                );
+                /*
+                 * Optimistic UI update:
+                 * these changes appear immediately, without waiting
+                 * for the server's response.
+                 */
+                input.value = newQuantity;
 
-                buttons.forEach(function (button) {
-                    button.disabled = true;
-                });
+                updateItemSubtotal(card, newQuantity);
+                recalculateCartTotal();
 
-                postRequest(/*[[@{/cart/update}]]*/ '/cart/update', {
-                    itemId: itemId,
-                    quantity: quantity
-                })
-                .then(function () {
+                try {
 
-                    /*
-                     * Reload so that the server recalculates
-                     * the cart total and stock status.
-                     */
-                    window.location.reload();
-
-                })
-                .catch(function (error) {
-
-                    input.value = oldQuantity;
-
-                    Swal.fire(
-                        "Error",
-                        error.message || "Failed to update quantity.",
-                        "error"
+                    await postRequest(
+                        /*[[@{/cart/update}]]*/ "/cart/update",
+                        {
+                            itemId: itemId,
+                            quantity: newQuantity
+                        }
                     );
 
-                })
-                .finally(function () {
+                    /*
+                     * Do not reload the page after success.
+                     * The updated values are already visible.
+                     */
 
-                    pendingItems.delete(itemId);
+                } catch (error) {
 
-                    buttons.forEach(function (button) {
-                        button.disabled = false;
+                    /*
+                     * The server rejected the change.
+                     * Restore the old quantity and calculate the totals again.
+                     */
+                    input.value = oldQuantity;
+
+                    updateItemSubtotal(card, oldQuantity);
+                    recalculateCartTotal();
+
+                    Swal.fire({
+                        title: "Unable to Update Quantity",
+                        text: error.message || "Failed to update quantity.",
+                        icon: "error",
+                        confirmButtonColor: "#9c27b0"
                     });
 
-                });
+                } finally {
+
+                    pendingItems.delete(itemId);
+                    setQuantityButtonsDisabled(itemId, false);
+
+                }
             }
 
             /*
@@ -385,7 +541,8 @@
 
                     button.addEventListener("click", function () {
 
-                        const itemId = this.getAttribute("data-item-id");
+                        const itemId =
+                            this.getAttribute("data-item-id");
 
                         if (pendingItems.has(itemId)) {
                             return;
@@ -395,38 +552,41 @@
                             "qty-" + itemId
                         );
 
-                        const max = parseInt(
-                            this.getAttribute("data-max"),
-                            10
+                        if (!input) {
+                            return;
+                        }
+
+                        const max = Number(
+                            this.getAttribute("data-max")
                         );
 
-                        const current = parseInt(input.value, 10) || 1;
+                        const current = Number(input.value) || 1;
 
                         if (!Number.isFinite(max) || max < 0) {
-                            Swal.fire(
-                                "Error",
-                                "Unable to determine the displayed stock.",
-                                "error"
-                            );
+
+                            Swal.fire({
+                                title: "Stock Unavailable",
+                                text: "Unable to determine the displayed stock.",
+                                icon: "error",
+                                confirmButtonColor: "#9c27b0"
+                            });
+
                             return;
                         }
 
                         if (current >= max) {
-                            Swal.fire(
-                                "Stock Limit",
-                                "The requested quantity cannot exceed the displayed stock. " +
-                                "Actual availability will be validated by the server.",
-                                "warning"
-                            );
+
+                            Swal.fire({
+                                title: "Stock Limit",
+                                text: "The requested quantity cannot exceed the displayed stock. Actual availability is validated by the server.",
+                                icon: "warning",
+                                confirmButtonColor: "#9c27b0"
+                            });
+
                             return;
                         }
 
-                        updateQuantity(
-                            itemId,
-                            current + 1,
-                            input,
-                            current
-                        );
+                        updateQuantity(itemId, current + 1, input);
 
                     });
 
@@ -440,7 +600,8 @@
 
                     button.addEventListener("click", function () {
 
-                        const itemId = this.getAttribute("data-item-id");
+                        const itemId =
+                            this.getAttribute("data-item-id");
 
                         if (pendingItems.has(itemId)) {
                             return;
@@ -450,17 +611,14 @@
                             "qty-" + itemId
                         );
 
-                        const current = parseInt(input.value, 10) || 1;
+                        if (!input) {
+                            return;
+                        }
+
+                        const current = Number(input.value) || 1;
 
                         if (current > 1) {
-
-                            updateQuantity(
-                                itemId,
-                                current - 1,
-                                input,
-                                current
-                            );
-
+                            updateQuantity(itemId, current - 1, input);
                         }
 
                     });
@@ -468,28 +626,41 @@
                 });
 
             /*
-             * Remove item from cart.
+             * Remove an item from the cart.
+             *
+             * The card disappears immediately after confirmation.
+             * If the server rejects the request, restore the card
+             * to its original position.
+             *
+             * No page reload is performed.
              */
             document.querySelectorAll(".btn-delete-item")
                 .forEach(function (button) {
 
                     button.addEventListener("click", function () {
 
-                        const itemId = this.getAttribute("data-item-id");
+                        const itemId =
+                            this.getAttribute("data-item-id");
 
                         if (pendingItems.has(itemId)) {
                             return;
                         }
 
+                        const card = button.closest(".cart-item-col");
+
+                        if (!card) {
+                            return;
+                        }
+
                         Swal.fire({
-                            title: 'Are you sure?',
+                            title: "Are you sure?",
                             text: "Do you want to remove this item from cart?",
-                            icon: 'warning',
+                            icon: "warning",
                             showCancelButton: true,
-                            confirmButtonColor: '#9c27b0',
-                            cancelButtonColor: '#c62828',
-                            confirmButtonText: 'Yes, remove it!'
-                        }).then(function (result) {
+                            confirmButtonColor: "#9c27b0",
+                            cancelButtonColor: "#c62828",
+                            confirmButtonText: "Yes, remove it!"
+                        }).then(async function (result) {
 
                             if (!result.isConfirmed) {
                                 return;
@@ -498,35 +669,101 @@
                             pendingItems.add(itemId);
                             button.disabled = true;
 
-                            postRequest(/*[[@{/cart/remove}]]*/ '/cart/remove', {
-                                itemId: itemId
-                            })
-                            .then(function () {
+                            /*
+                             * Save the card's position so we can restore it
+                             * if the server rejects the deletion.
+                             */
+                            const placeholder =
+                                document.createComment("cart-item-placeholder");
 
-                                Swal.fire(
-                                    "Removed!",
-                                    "Item removed from cart.",
-                                    "success"
-                                ).then(function () {
-                                    window.location.reload();
-                                });
+                            card.parentNode.insertBefore(placeholder, card);
 
-                            })
-                            .catch(function (error) {
+                            /*
+                             * Optimistically remove the card immediately.
+                             */
+                            card.remove();
 
-                                Swal.fire(
-                                    "Error",
-                                    error.message || "Failed to remove item.",
-                                    "error"
+                            recalculateCartTotal();
+
+                            /*
+                             * If no cards remain, display the empty-cart message.
+                             */
+                            const remainingCards =
+                                document.querySelectorAll(".cart-item-col").length;
+
+                            if (remainingCards === 0) {
+
+                                if (cartContent) {
+                                    cartContent.style.display = "none";
+                                }
+
+                                if (emptyCartMessage) {
+                                    emptyCartMessage.style.display = "block";
+                                }
+
+                            }
+
+                            try {
+
+                                await postRequest(
+                                    /*[[@{/cart/remove}]]*/ "/cart/remove",
+                                    {
+                                        itemId: itemId
+                                    }
                                 );
 
-                            })
-                            .finally(function () {
+                                /*
+                                 * The server confirmed deletion.
+                                 * The card is already gone.
+                                 */
+                                placeholder.remove();
+
+                                showSuccessToast("Item removed from cart");
+
+                            } catch (error) {
+
+                                /*
+                                 * The deletion failed.
+                                 * Restore the card to its original position.
+                                 */
+                                placeholder.parentNode?.insertBefore(
+                                    card,
+                                    placeholder
+                                );
+
+                                placeholder.remove();
+
+                                if (cartContent) {
+                                    cartContent.style.display = "";
+                                }
+
+                                if (emptyCartMessage) {
+
+                                    const cardsNow =
+                                        document.querySelectorAll(
+                                            ".cart-item-col"
+                                        ).length;
+
+                                    emptyCartMessage.style.display =
+                                        cardsNow === 0 ? "block" : "none";
+
+                                }
+
+                                recalculateCartTotal();
+
+                                Swal.fire({
+                                    title: "Unable to Remove Item",
+                                    text: error.message || "Failed to remove item.",
+                                    icon: "error",
+                                    confirmButtonColor: "#9c27b0"
+                                });
+
+                            } finally {
 
                                 pendingItems.delete(itemId);
                                 button.disabled = false;
 
-                            });
+                            }
 
                         });
 
