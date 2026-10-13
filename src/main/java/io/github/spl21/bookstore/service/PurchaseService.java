@@ -1,16 +1,13 @@
 package io.github.spl21.bookstore.service;
 
-import io.github.spl21.bookstore.entity.*;
-import io.github.spl21.bookstore.repository.*;
-
-
-
-
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import io.github.spl21.bookstore.entity.Purchase;
+import io.github.spl21.bookstore.enums.PaymentStatus;
+import io.github.spl21.bookstore.repository.PurchaseRepository;
 
 @Service
 @Transactional
@@ -49,5 +46,11 @@ public class PurchaseService {
     @Transactional(readOnly = true)
     public List<Purchase> getAllPurchasesWithDetails() {
         return purchaseRepository.findAllPurchasesWithUserAndItems();
+    }
+
+
+    // find all purchases for a user where payment status is paid
+    public List<Purchase> findSuccessfulPurchases(Long userId) {
+        return purchaseRepository.findByUser_IdAndPaymentStatus(userId, PaymentStatus.PAID);
     }
 }

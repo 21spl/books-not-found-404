@@ -1,134 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout Canceled</title>
+    <title>Checkout Cancelled</title>
+
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <link rel="stylesheet" th:href="@{/css/style.css(v='1.0.2')}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/segoe-ui-4" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/cascadia-code" rel="stylesheet">
+
     <style>
-        :root {
-            --bg-color: #f9fafb;
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --text-muted: #4b5563;
-            --warning-color: #f59e0b;
-            --primary-btn: #6366f1;
-            --primary-btn-hover: #4f46e5;
-            --secondary-btn: #e5e7eb;
-            --secondary-btn-hover: #d1d5db;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif, 'Cascadia Code', 'Caveat Brush', 'Pastry Paradise', 'Cracksmoon', 'Playpen Sans';
+            font-size: 1.3rem;
         }
 
-        .container {
-            background-color: var(--card-bg);
-            padding: 40px 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            text-align: center;
-            max-width: 450px;
-            width: 100%;
+        .card {
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            box-shadow: 0 0 8px rgba(138, 43, 226, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background-color: #000000;
+            color: #fff;
+            margin: 20px;
+            padding: 40px;
         }
 
-        .icon-container {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 64px;
-            height: 64px;
-            background-color: #fef3c7;
-            border-radius: 50%;
-            margin-bottom: 24px;
+        .footer {
+            padding: 1rem;
+            font-size: 1rem;
+            background-color: #1a1a1a;
+            border-top: 1px solid #2c2c2c;
+            color: #888;
         }
 
-        .icon-container svg {
-            width: 32px;
-            height: 32px;
-            color: var(--warning-color);
+        h2, h4 {
+            color: #a259ff;
         }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 12px 0;
+        .cancel-icon {
+            font-size: 4rem;
+            color: #a259ff;
+            margin-bottom: 20px;
         }
 
-        p {
-            font-size: 16px;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin: 0 0 30px 0;
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: background-color 0.2s, transform 0.1s;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
+        .cancel-message {
+            color: #cccccc;
+            font-size: 1.1rem;
+            line-height: 1.7;
         }
 
         .btn-primary {
-            background-color: var(--primary-btn);
-            color: white;
+            background-color: #a259ff;
+            border: none;
+            padding: 10px 24px;
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-btn-hover);
+            background-color: #8a3edb;
         }
 
-        .btn-secondary {
-            background-color: var(--secondary-btn);
-            color: var(--text-main);
+        .btn-outline-light {
+            padding: 10px 24px;
         }
 
-        .btn-secondary:hover {
-            background-color: var(--secondary-btn-hover);
+        .cancel-note {
+            color: #888;
+            font-size: 0.95rem;
+            margin-top: 20px;
         }
     </style>
 </head>
+
 <body>
 
-    <div class="container">
-        <!-- Warning / Cancel Exclamation Icon -->
-        <div class="icon-container">
-            <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-            </svg>
+    <!-- Navbar -->
+    <div th:insert="fragments/navbar :: navbar"></div>
+
+    <div class="container mt-5 mb-5">
+
+        <div class="card text-center">
+
+            <div class="cancel-icon">
+                &#10005;
+            </div>
+
+            <h2 class="mb-4">Checkout Cancelled</h2>
+
+            <p class="cancel-message">
+                Your checkout was cancelled before completion.
+            </p>
+
+            <p class="cancel-message">
+                If you cancelled accidentally, you can return to your cart
+                and try again whenever you're ready.
+            </p>
+
+            <div class="d-flex justify-content-center flex-wrap gap-3 mt-4">
+
+                <a th:href="@{/cart}" class="btn btn-primary">
+                    Return to Cart
+                </a>
+
+                <a th:href="@{/}" class="btn btn-outline-light">
+                    Continue Shopping
+                </a>
+
+            </div>
+
+            <p class="cancel-note">
+                Your next favourite book will still be waiting for you.
+            </p>
+
         </div>
 
-        <h1>Order Canceled</h1>
-        <p>Your payment session was closed, and no charges were made. If you encountered an issue or changed your mind, you can try checking out again whenever you're ready.</p>
-
-        <div class="button-group">
-            <!-- Update the href links to point to your actual routes -->
-            <a href="/cart" class="btn btn-primary">Return to Cart</a>
-            <a href="/" class="btn btn-secondary">Go to Homepage</a>
-        </div>
     </div>
+
+    <!-- Footer -->
+    <div class="footer text-center">
+        &copy; 2025 404BooksNotFound &nbsp;|&nbsp;
+        Built with irony, styled with restraint.
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

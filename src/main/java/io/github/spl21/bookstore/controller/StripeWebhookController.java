@@ -1,6 +1,5 @@
 package io.github.spl21.bookstore.controller;
 
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
+import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 
@@ -46,19 +46,27 @@ public class StripeWebhookController {
             // Security Guard: Verify the request origin and cryptographic signature integrity
             event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
         } catch (SignatureVerificationException e) {
-            // Reject fake or tampered payloads immediately
+            System.err.println("CRITICAL: Webhook signature validation failed. Check your signing secret.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature token validation");
         }
 
+        System.out.println("Webhook verified successfully! Event type captured: " + event.getType());
+
         // Handle the specific payment confirmation event type
         if ("checkout.session.completed".equals(event.getType())) {
-            // Extract the session data payload structure
-            Session session = (Session) event.getDataObjectDeserializer().getObject()
-                    .orElse(null);
-
-            if (session != null) {
+            
+            // FIX: Use the explicit, robust data deserialization engine sequence
+            EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+            
+            if (deserializer.getObject().isPresent()) {
+                Session session = (Session) deserializer.getObject().get();
+                System.out.println("Stripe payload parsed correctly! Initiating fulfillment for session: " + session.getId());
+                
                 // Trigger the core database transaction using the session identifier token
                 fulfillmentService.fulfillOrder(session.getId());
+            } else {
+                System.err.println("ERROR: Failed to deserialize Stripe payload contents. Check target SDK versions.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to parse event data object matrix");
             }
         }
 

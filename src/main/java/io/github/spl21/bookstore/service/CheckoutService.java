@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.github.spl21.bookstore.dto.CheckoutSummaryDTO;
-import io.github.spl21.bookstore.dto.OrderFormDto;
+import io.github.spl21.bookstore.dto.DeliveryFormDto;
 import io.github.spl21.bookstore.entity.Cart;
 import io.github.spl21.bookstore.entity.CartItem;
 import io.github.spl21.bookstore.entity.InventoryReservation;
@@ -34,35 +34,73 @@ public class CheckoutService {
     private final PurchaseRepository purchaseRepository;
     private final BookService bookService;
 
-    @Transactional(readOnly = true)
-    public CheckoutSummaryDTO getCheckoutSummary(String username) {
+
+
+// ==================================== Reserve Inventory for Checkout =================================
+    @Transactional
+    public void reserveItemsForCheckout(String username) {
+
+        // step 1: find the user
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User session invalid"));
 
+        // step 2: get the cart of the user
         Cart cart = cartService.getCartByUser(user);
         if (cart == null) {
             throw new EmptyCartException("User does not have an open cart");
         }
 
+        // step 3: get all the cart items
+        List<CartItem> cartItems = cartService.getCartItems(user);
+        if (cartItems.isEmpty()) {
+            throw new EmptyCartException("Cart contains no products");
+        }
+
+        // step 4: reserve the inventory
+        for (CartItem item : cartItems) {
+            Long reqBookId = item.getBook().getId();
+            int reqQuantity = item.getQuantity();
+            int availableStock = bookService.getActualStock(reqBookId);
+
+            boolean secured = reservationService.reserveInventory(reqBookId, user.getId(), reqQuantity);
+            if (!secured) {
+                throw new NotEnoughStockException(reqQuantity, availableStock);
+            }
+        }
+    }
+
+
+
+// ======================================= Get Checkout Summary ==========================================
+    @Transactional
+    public CheckoutSummaryDTO getCheckoutSummary(String username) {
+
+        // step 1: get the user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User session invalid"));
+
+        // step 2: get the cart
+        Cart cart = cartService.getCartByUser(user);
+        if (cart == null) {
+            throw new EmptyCartException("User does not have an open cart");
+        }
+
+        // step 3: get all the cart items
         List<CartItem> cartItems = cartService.getCartItems(user);
         if (cartItems.isEmpty()) {
             throw new EmptyCartException("Cart contains no products");
         }
         
+        // step 4: prepare the checkout summary
         List<String> stockWarnings = new ArrayList<>();
         double totalAmount = 0;
 
         for (CartItem item : cartItems) {
             Long reqBookId = item.getBook().getId();
-            int reqQuantity = item.getQuantity();
             int availableStock = bookService.getActualStock(reqBookId);
             
-            boolean secured = reservationService.reserveInventory(reqBookId, user.getId(), reqQuantity);
-            if (!secured) {
-                throw new NotEnoughStockException(reqQuantity, availableStock);
-            }
-
             totalAmount += (item.getQuantity() * item.getBook().getPrice());
+            // check for stock warnings
             if (availableStock < 5) {
                 stockWarnings.add(item.getBook().getTitle() + " has critically low stock!");
             }
@@ -71,8 +109,11 @@ public class CheckoutService {
         return new CheckoutSummaryDTO(cartItems, totalAmount, stockWarnings);
     }
 
+
+//============================ initiate Checkout Payment ============================
+
     @Transactional
-    public String initiateCheckoutPayment(String username, OrderFormDto orderForm) {
+    public String initiateCheckoutPayment(String username, DeliveryFormDto deliveryForm) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User session invalid"));
 
@@ -85,8 +126,8 @@ public class CheckoutService {
         Purchase purchase = new Purchase();
         purchase.setUser(user);
         purchase.setPurchaseDate(LocalDateTime.now());
-        purchase.setAddress(orderForm.getAddress());
-        purchase.setPhone(orderForm.getPhone());
+        purchase.setAddress(deliveryForm.getAddress());
+        purchase.setPhone(deliveryForm.getPhone());
         purchase.setPaymentStatus(PaymentStatus.PENDING); 
 
         List<PurchaseItem> purchaseItems = new ArrayList<>();
@@ -119,3 +160,5 @@ public class CheckoutService {
         return stripeUrl; // Return raw redirection string link back to the controller
     }
 }
+
+

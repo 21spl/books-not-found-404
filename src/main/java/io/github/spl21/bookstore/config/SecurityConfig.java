@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -150,7 +152,6 @@ public class SecurityConfig {
 
         http
             .authorizeHttpRequests(authorize -> authorize
-
                 // Public pages, static resources, and the external Stripe Webhook gateway endpoint
                 .requestMatchers(
                         "/",
@@ -162,7 +163,7 @@ public class SecurityConfig {
                         "/js/**",
                         "/images/**",
                         "/error",
-                        "/api/webhooks/**" // Allow unauthenticated entry for Stripe's async delivery servers
+                        "/api/webhooks/**" // Explicitly opened to let Stripe bypass authorization constraints
                 ).permitAll()
 
                 // Example role-specific URL areas
@@ -170,8 +171,7 @@ public class SecurityConfig {
                 .requestMatchers("/customer/**", "/profile/*", "/cart/**", "/checkout/**").hasRole("CUSTOMER")
 
                 // Both customers and admins can access user pages
-                .requestMatchers("/user/**")
-                    .hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/user/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                 // Protect anything not explicitly made public
                 .anyRequest().authenticated()
@@ -187,15 +187,26 @@ public class SecurityConfig {
             // Redirect unauthenticated browser requests to the login page.
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(
-                    (request, response, exception) ->
-                        response.sendRedirect("/auth/login")
+                    (request, response, exception) -> {
+                        // FIX: Prevent Spring from hijacking the webhook request and forcing a 302 login page redirect
+                        if (request.getRequestURI().startsWith("/api/webhooks")) {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized webhook source event access");
+                        } else {
+                            response.sendRedirect("/auth/login");
+                        }
+                    }
                 )
             )
 
-            // Read the JWT from the cookie instead of requiring
-            // an Authorization: Bearer header.
+            // Read the JWT from the cookie instead of requiring an Authorization: Bearer header.
             .oauth2ResourceServer(oauth2 -> oauth2
-                .bearerTokenResolver(cookieBearerTokenResolver)
+                // FIX: Wraps the token resolver to completely skip evaluation blocks if targeting the webhooks endpoint
+                .bearerTokenResolver(request -> {
+                    if (request.getRequestURI().startsWith("/api/webhooks")) {
+                        return null; // Bypasses the JWT filter tracking context entirely for Stripe
+                    }
+                    return cookieBearerTokenResolver.resolve(request);
+                })
                 .jwt(jwt -> jwt
                     .jwtAuthenticationConverter(jwtAuthenticationConverter)
                 )
@@ -203,6 +214,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
 
 

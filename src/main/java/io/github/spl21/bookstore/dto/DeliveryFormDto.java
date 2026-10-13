@@ -9,7 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class OrderFormDto {
+public class DeliveryFormDto {
 
     @NotBlank(message = "Delivery address cannot be empty.")
     private String address;
@@ -18,7 +18,7 @@ public class OrderFormDto {
     @Pattern(regexp = "[0-9]{10}", message = "Please provide a valid 10-digit mobile number.")
     private String phone;
 
-    public OrderFormDto() {
+    public DeliveryFormDto() {
     }
 
 }

@@ -15,12 +15,14 @@ import io.github.spl21.bookstore.entity.User;
 import io.github.spl21.bookstore.repository.UserRepository;
 import io.github.spl21.bookstore.service.PurchaseService;
 
+
 @Controller
 @RequestMapping("/profile")
 public class ProfileController {
 
     private final PurchaseService purchaseService;
     private final UserRepository userRepository;
+    
 
     public ProfileController(
             PurchaseService purchaseService,
@@ -64,7 +66,7 @@ public class ProfileController {
         User user = optionalUser.get();
 
         List<Purchase> purchases =
-                purchaseService.findAllPurchaseByUserId(user.getId());
+                purchaseService.findSuccessfulPurchases(user.getId());
 
         model.addAttribute("purchases", purchases);
 

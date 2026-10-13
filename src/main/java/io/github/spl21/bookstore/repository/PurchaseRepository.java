@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import io.github.spl21.bookstore.entity.Purchase;
+import io.github.spl21.bookstore.enums.PaymentStatus;
 
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
@@ -30,5 +31,27 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
            "ORDER BY p.purchaseDate DESC")
     List<Purchase> findAllPurchasesWithUserAndItems();
 
-    Optional<Purchase> findByStripeSessionId(String stripeSessionId);
+
+
+
+    @Query("SELECT DISTINCT p FROM Purchase p " +
+           "LEFT JOIN FETCH p.items i " +
+           "LEFT JOIN FETCH i.book " +
+           "JOIN FETCH p.user " +
+           "WHERE p.stripeSessionId = :stripeSessionId")
+    Optional<Purchase> findByStripeSessionId(@Param("stripeSessionId") String stripeSessionId);
+
+
+       // find all purchases for a user where payment status is paid
+       @Query("""
+       SELECT p
+       FROM Purchase p
+       WHERE p.user.id = :userId
+       AND p.paymentStatus = :status
+       """)
+       List<Purchase> findPurchasesByUserAndStatus(
+              @Param("userId") Long userId,
+              @Param("status") PaymentStatus status
+       );
+
 }
