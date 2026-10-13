@@ -1,16 +1,22 @@
 package io.github.spl21.bookstore.controller;
 
 
-import com.stripe.exception.SignatureVerificationException;
-import com.stripe.model.Event;
-import com.stripe.model.checkout.Session;
-import com.stripe.net.Webhook;
-import io.github.spl21.bookstore.service.FulfillmentService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.Event;
+import com.stripe.model.checkout.Session;
+import com.stripe.net.Webhook;
+
+import io.github.spl21.bookstore.service.FulfillmentService;
 
 @Controller
 @RequestMapping("/api/webhooks")
@@ -29,6 +35,7 @@ public class StripeWebhookController {
      * Public unauthenticated webhook listener endpoint targeted by Stripe servers.
      */
     @PostMapping("/stripe")
+    @ResponseBody 
     public ResponseEntity<String> handleStripeWebhook(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String sigHeader) {

@@ -151,7 +151,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authorize -> authorize
 
-                // Public pages and resources
+                // Public pages, static resources, and the external Stripe Webhook gateway endpoint
                 .requestMatchers(
                         "/",
                         "/auth/**",
@@ -161,7 +161,8 @@ public class SecurityConfig {
                         "/css/**",
                         "/js/**",
                         "/images/**",
-                        "/error"
+                        "/error",
+                        "/api/webhooks/**" // Allow unauthenticated entry for Stripe's async delivery servers
                 ).permitAll()
 
                 // Example role-specific URL areas
@@ -176,11 +177,13 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // CSRF protection remains enabled for browser forms.
-            // Do not disable it merely because authentication uses JWT.
+            // CSRF protection remains active globally for standard UI forms 
+            // while explicitly permitting unauthenticated programmatic HTTP POST operations from Stripe
             .csrf(csrf -> csrf
                 .csrfTokenRepository(csrfTokenRepository)
+                .ignoringRequestMatchers("/api/webhooks/**") // Bypasses CSRF checks strictly for your Stripe webhook path
             )
+            
             // Redirect unauthenticated browser requests to the login page.
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(
@@ -194,13 +197,13 @@ public class SecurityConfig {
             .oauth2ResourceServer(oauth2 -> oauth2
                 .bearerTokenResolver(cookieBearerTokenResolver)
                 .jwt(jwt -> jwt
-                    .jwtAuthenticationConverter(
-                            jwtAuthenticationConverter)
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter)
                 )
             );
 
         return http.build();
     }
+
 
 
     @Bean
