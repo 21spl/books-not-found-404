@@ -19,11 +19,15 @@ import io.github.spl21.bookstore.entity.Book;
 import io.github.spl21.bookstore.entity.Cart;
 import io.github.spl21.bookstore.entity.CartItem;
 import io.github.spl21.bookstore.entity.User;
+import io.github.spl21.bookstore.exception.NotEnoughStockException;
+import io.github.spl21.bookstore.exception.OutOfStockException;
 import io.github.spl21.bookstore.repository.UserRepository;
 import io.github.spl21.bookstore.service.BookService;
 import io.github.spl21.bookstore.service.CartService;
+import lombok.RequiredArgsConstructor;
 
-@Controller
+@Controller 
+@RequiredArgsConstructor
 @RequestMapping("/cart")
 public class CartController {
 
@@ -31,40 +35,28 @@ public class CartController {
     private final CartService cartService;
     private final UserRepository userRepository;
 
-    public CartController(
-            BookService bookService,
-            CartService cartService,
-            UserRepository userRepository) {
-
-        this.bookService = bookService;
-        this.cartService = cartService;
-        this.userRepository = userRepository;
-    }
-
-    // Retrieve the currently authenticated user's database entity.
+    //===================================== Retrieve current User =============================================
     private Optional<User> getCurrentUser(Authentication authentication) {
         if (authentication == null
                 || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getName())) {
             return Optional.empty();
         }
-
         return userRepository.findByUsername(authentication.getName());
     }
-    // View cart
+
+    //============================================== View cart ===============================================
     @GetMapping
     public String viewCartPage(Authentication authentication, Model model) {
-
         Optional<User> userOptional = getCurrentUser(authentication);
-
         if (userOptional.isEmpty()) {
             return "redirect:/auth/login";
         }
 
         User user = userOptional.get();
-
         Cart cart = cartService.getCartByUser(user);
 
+        // This call automatically injects transient @Transient stock warnings into matching line items
         List<CartItem> cartItems = cart != null
                 ? cartService.getCartItems(user)
                 : new ArrayList<>();
@@ -75,7 +67,9 @@ public class CartController {
         for (CartItem item : cartItems) {
             totalAmount += item.getQuantity() * item.getBook().getPrice();
 
-            if (item.getQuantity() > item.getBook().getCopies()) {
+            // FIX 2: Compute against real-time available stock instead of raw un-isolated copies counts
+            int trueAvailableStock = bookService.getActualStock(item.getBook().getId());
+            if (item.getQuantity() > trueAvailableStock) {
                 hasOutOfStock = true;
             }
         }
@@ -87,7 +81,7 @@ public class CartController {
         return "customer/cart";
     }
 
-    // Add a book to the cart
+    //================================ Add a book to the cart =========================================
     @ResponseBody
     @PostMapping("/add")
     public ResponseEntity<String> addToCart(
@@ -96,7 +90,6 @@ public class CartController {
             Authentication authentication) {
 
         Optional<User> userOptional = getCurrentUser(authentication);
-
         if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Please login to add items to cart.");
@@ -107,40 +100,28 @@ public class CartController {
                     .body("Quantity must be at least 1.");
         }
 
-        Book book = bookService.getBook(bookId);
-
+        // Assumes your legacy bookService utilizes findById mapping models
+        Book book = bookService.getBook(bookId); 
         if (book == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Book with ID " + bookId + " not found.");
         }
 
-        int copies = book.getCopies();
-
-        if (copies <= 0) {
-            return ResponseEntity.badRequest()
-                    .body("This book is out of stock.");
-        }
-
-        if (quantity > copies) {
-            return ResponseEntity.badRequest()
-                    .body("Only " + copies + " copies available.");
-        }
-
         User user = userOptional.get();
-
         try {
             cartService.addBookToCart(user, book, quantity);
+            return ResponseEntity.ok("Book '" + book.getTitle() + "' added to cart successfully!");
 
-            return ResponseEntity.ok(
-                    "Book '" + book.getTitle() + "' added to cart successfully!");
-
+        } catch (OutOfStockException | NotEnoughStockException | IllegalArgumentException e) {
+            // FIX 3: Intercept specific custom business exceptions to deliver informative error responses
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to add book to cart.");
+                    .body("An unexpected error occurred while modifying your cart selections.");
         }
     }
 
-    // Update cart item quantity
+    //======================== Update cart item quantity===================
     @ResponseBody
     @PostMapping("/update")
     public ResponseEntity<String> updateCartItemQuantity(
@@ -149,14 +130,12 @@ public class CartController {
             Authentication authentication) {
 
         Optional<User> userOptional = getCurrentUser(authentication);
-
         if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Please login to access the cart.");
         }
 
         User user = userOptional.get();
-
         List<CartItem> items = cartService.getCartItems(user);
 
         CartItem item = items.stream()
@@ -165,29 +144,26 @@ public class CartController {
                 .orElse(null);
 
         if (item == null) {
-            return ResponseEntity.badRequest()
-                    .body("Invalid cart item.");
+            return ResponseEntity.badRequest().body("Invalid cart item.");
         }
 
         if (quantity < 1) {
             cartService.removeCartItem(item);
-
             return ResponseEntity.ok("Item removed due to zero quantity.");
         }
 
-        int available = item.getBook().getCopies();
-
-        if (quantity > available) {
-            return ResponseEntity.badRequest()
-                    .body("Only " + available + " copies available.");
+        try {
+            cartService.updateCartItemQuantity(itemId, quantity);
+            return ResponseEntity.ok("Quantity updated successfully.");
+        } catch (OutOfStockException | NotEnoughStockException | IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update cart quantity thresholds.");
         }
-
-        cartService.updateCartItemQuantity(itemId, quantity);
-
-        return ResponseEntity.ok("Quantity updated.");
     }
 
-    // Remove cart item
+    //=========================================== Remove cart item ===========================================
     @ResponseBody
     @PostMapping("/remove")
     public ResponseEntity<String> removeCartItem(
@@ -195,14 +171,12 @@ public class CartController {
             Authentication authentication) {
 
         Optional<User> userOptional = getCurrentUser(authentication);
-
         if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Please login to access the cart.");
         }
 
         User user = userOptional.get();
-
         List<CartItem> items = cartService.getCartItems(user);
 
         CartItem item = items.stream()
@@ -211,12 +185,11 @@ public class CartController {
                 .orElse(null);
 
         if (item == null) {
-            return ResponseEntity.badRequest()
-                    .body("Invalid cart item.");
+            return ResponseEntity.badRequest().body("Invalid cart item reference requested.");
         }
 
         cartService.removeCartItem(item);
-
         return ResponseEntity.ok("Item removed from cart.");
     }
 }
+

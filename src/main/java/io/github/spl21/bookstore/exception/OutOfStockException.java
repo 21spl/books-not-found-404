@@ -1,11 +1,9 @@
 package io.github.spl21.bookstore.exception;
 
-import java.util.List;
 
 public class OutOfStockException extends RuntimeException {
-    private final List<String> errors;
-    public OutOfStockException(List<String> errors) {
-        this.errors = errors;
+
+    public OutOfStockException() {
+        super("This book is out of stock.");
     }
-    public List<String> getErrors() { return errors; }
 }

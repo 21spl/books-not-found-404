@@ -1,14 +1,6 @@
 package io.github.spl21.bookstore.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 
 import lombok.Getter;
@@ -32,6 +24,9 @@ public class CartItem {
     @Min(value = 1, message = "Quantity must be at least 1")
     private int quantity;
 
+    @Transient
+    private String stockWarning;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id")
     private Cart cart;
@@ -41,6 +36,4 @@ public class CartItem {
     private Book book;
 
     private double subTotal;
-
-    
 }

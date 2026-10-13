@@ -92,8 +92,11 @@ public class BookService {
     @Transactional(readOnly = true)
     public int getActualStock(Long bookId){
         Book book = bookRepository.findById(bookId).orElse(null);
-        int copies = book.getCopies();
         int reservedQuantity = inventoryReservationRepository.getActiveReservedQuantity(bookId, LocalDateTime.now());
-        return copies - reservedQuantity;
+        
+        // Prevent negative values just in case an edge cleanup task lags behind
+        int realStock = book.getCopies() - reservedQuantity;
+        return Math.max(0, realStock);
+        
     }
 }
