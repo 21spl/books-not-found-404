@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>io.github.spl21</groupId>
-	<artifactId>bookstore</artifactId>
+	<artifactId>404-books-not-found</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>bookstore</name>
+	<name>404 books not found</name>
 	<description/>
 	<url/>
 	<licenses>

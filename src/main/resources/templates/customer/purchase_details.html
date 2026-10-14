@@ -122,10 +122,10 @@
 
     <!-- Dynamic Navbar based on role -->
     <div sec:authorize="hasRole('ADMIN')"
-         th:insert="fragments/admin-navbar :: admin-navbar"></div>
+         th:insert="~{fragments/admin-navbar :: admin-navbar}"></div>
 
     <div sec:authorize="!hasRole('ADMIN')"
-         th:insert="fragments/navbar :: navbar"></div>
+         th:insert="~{fragments/navbar :: navbar}"></div>
 
     <div class="container mt-4">
 

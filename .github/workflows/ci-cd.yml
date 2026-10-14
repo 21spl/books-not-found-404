@@ -1,0 +1,33 @@
+name: Java CI/CD Automation Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest  # ◄--- FIXED HERE (Changed from runs-size)
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Java Development Kit Environment (JDK 21)
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Compile and Verify Build Integrity via Maven
+      run: mvn clean package -DskipTests
+
+  deploy-to-render:
+    needs: build-and-validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest  # ◄--- FIXED HERE (Changed from runs-size)
+    steps:
+    - name: Trigger Render Direct Hook Deployment Action
+      run: |
+        curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
